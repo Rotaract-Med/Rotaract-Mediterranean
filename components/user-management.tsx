@@ -54,20 +54,38 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
   }, [])
 
   const loadUsers = async () => {
-    const supabase = createClient()
-    const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false })
+    try {
+      const supabase = createClient()
+      
+      // Log the current session for debugging
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log("Current session:", session ? "Active" : "None")
+      
+      const { data, error, count } = await supabase
+        .from("profiles")
+        .select("*", { count: 'exact' })
+        .order("created_at", { ascending: false })
 
-    if (error) {
-      console.error("Error loading users:", error)
-      toast({
-        title: "Error loading users",
-        description: error.message || "Failed to load users. Please try again.",
-        variant: "destructive",
-      })
+      console.log("Query result:", { data, error, count })
+
+      if (error) {
+        console.error("Error loading users:", error)
+        toast({
+          title: "Error loading users",
+          description: error.message || "Failed to load users. Please try again.",
+          variant: "destructive",
+        })
+        setUsers([])
+      } else {
+        console.log(`Successfully loaded ${data?.length || 0} users`)
+        setUsers(data || [])
+      }
+    } catch (err) {
+      console.error("Unexpected error loading users:", err)
+      setUsers([])
+    } finally {
+      setIsLoading(false)
     }
-
-    setUsers(data || [])
-    setIsLoading(false)
   }
 
   const handleRoleChange = async (userId: string, newRole: string) => {
