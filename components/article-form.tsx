@@ -180,8 +180,8 @@ export function ArticleForm({ article }: ArticleFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="grid gap-6">
+    <form onSubmit={handleSubmit} className="w-full overflow-x-hidden">
+      <div className="space-y-4 sm:space-y-6">
         {article && changedFieldsCount > 0 && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
@@ -338,7 +338,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   type="button"
                   variant={!showMediaLibrary ? "default" : "outline"}

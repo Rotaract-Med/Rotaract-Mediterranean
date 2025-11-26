@@ -15,7 +15,7 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 w-full overflow-x-hidden">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Edit Article</h1>
         <p className="text-sm sm:text-base text-gray-500 mt-1">Update your MEDTimes article</p>

@@ -32,12 +32,39 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
   const { toast } = useToast()
 
   useEffect(() => {
-    loadUsers()
+    const checkAuthAndLoadUsers = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        console.error("No authenticated user found")
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to view users.",
+          variant: "destructive",
+        })
+        setIsLoading(false)
+        return
+      }
+      
+      loadUsers()
+    }
+    
+    checkAuthAndLoadUsers()
   }, [])
 
   const loadUsers = async () => {
     const supabase = createClient()
-    const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false })
+    const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error loading users:", error)
+      toast({
+        title: "Error loading users",
+        description: error.message || "Failed to load users. Please try again.",
+        variant: "destructive",
+      })
+    }
 
     setUsers(data || [])
     setIsLoading(false)
@@ -143,9 +170,16 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {users.map((user) => (
-              <div key={user.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+          {users.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Users className="h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-500 font-medium">No users found</p>
+              <p className="text-sm text-gray-400 mt-1">Users will appear here once they are added to the system.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {users.map((user) => (
+                <div key={user.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center gap-4">
                   <Avatar>
                     <AvatarImage src={user.avatar_url || "/placeholder.svg"} />
@@ -212,7 +246,8 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
