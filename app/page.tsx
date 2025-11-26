@@ -1,101 +1,110 @@
-import Image from "next/image";
+import { createClient } from "@/lib/server"
+import { HomePageClient } from "@/components/home-page-client"
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+export default async function RotaractMediterranean() {
+  let heroSlides = null
+  let collaboratorImages = null
+  let countryRepImages = null
+  let executiveBoardImages = null
+  
+  try {
+    const supabase = await createClient()
+    const result = await supabase
+      .from("hero_slides")
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+    heroSlides = result.data
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    // Fetch collaborator images
+    const collaboratorsResult = await supabase
+      .from("collaborator_images")
+      .select("*")
+      .order("display_order", { ascending: true })
+    collaboratorImages = collaboratorsResult.data
+
+    // Fetch country representatives avatars
+    const countryRepsResult = await supabase
+      .from("team_members")
+      .select("avatar_url")
+      .eq("section", "country_representatives")
+      .not("avatar_url", "is", null)
+    countryRepImages = countryRepsResult.data
+
+    // Fetch executive board avatars
+    const executiveBoardResult = await supabase
+      .from("team_members")
+      .select("avatar_url")
+      .eq("section", "executive_board")
+      .not("avatar_url", "is", null)
+    executiveBoardImages = executiveBoardResult.data
+  } catch (error) {
+    console.error("Failed to fetch data:", error)
+    // Will use default slides
+  }
+
+  // Fallback to default slides if none in database
+  const defaultSlides = [
+    {
+      image: "/placeholder.svg?height=600&width=1200",
+      title: "Welcome",
+      subtitle:
+        "Discover the biggest hub connecting Europe, Middle East & Africa through international service projects and events",
+    },
+    {
+      image: "/placeholder.svg?height=600&width=1200",
+      title: "Connect",
+      subtitle: "Building bridges between cultures through youth leadership and community service",
+    },
+    {
+      image: "/placeholder.svg?height=600&width=1200",
+      title: "Serve",
+      subtitle: "Empowering young leaders to create positive change in their communities",
+    },
+  ]
+
+  const slides =
+    heroSlides && heroSlides.length > 0
+      ? heroSlides.map((slide: any) => ({
+          image: slide.image_data,
+          title: slide.title,
+          subtitle: slide.subtitle,
+          media_type: slide.media_type || "image",
+          media_url: slide.media_url || slide.image_data,
+        }))
+      : defaultSlides
+
+  const collaborators = collaboratorImages && collaboratorImages.length > 0
+    ? collaboratorImages.map((img: any) => img.image_url)
+    : [
+        "/placeholder.svg?height=300&width=400&text=Collaborator+1",
+        "/placeholder.svg?height=300&width=400&text=Collaborator+2",
+        "/placeholder.svg?height=300&width=400&text=Collaborator+3",
+        "/placeholder.svg?height=300&width=400&text=Collaborator+4",
+      ]
+
+  const countryReps = countryRepImages && countryRepImages.length > 0
+    ? countryRepImages.map((member: any) => member.avatar_url)
+    : [
+        "/placeholder.svg?height=300&width=400&text=Representative+Meeting",
+        "/placeholder.svg?height=300&width=400&text=Leadership+Team",
+        "/placeholder.svg?height=300&width=400&text=Conference+2024",
+        "/placeholder.svg?height=300&width=400&text=Youth+Leaders",
+      ]
+
+  const executiveBoard = executiveBoardImages && executiveBoardImages.length > 0
+    ? executiveBoardImages.map((member: any) => member.avatar_url)
+    : [
+        "/placeholder.svg?height=300&width=400&text=Board+Meeting",
+        "/placeholder.svg?height=300&width=400&text=Strategic+Planning",
+        "/placeholder.svg?height=300&width=400&text=Annual+Assembly",
+        "/placeholder.svg?height=300&width=400&text=Leadership+Summit",
+      ]
+
+  return <HomePageClient 
+    heroSlides={slides} 
+    collaboratorImages={collaborators}
+    countryRepImages={countryReps}
+    executiveBoardImages={executiveBoard}
+  />
 }
