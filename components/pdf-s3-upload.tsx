@@ -56,8 +56,17 @@ export function PDFS3Upload({ onPDFUploaded, currentPdfUrl }: PDFS3UploadProps) 
     setIsUploading(true)
 
     try {
+      // Convert File to Buffer for S3 upload
+      const arrayBuffer = await file.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+      
+      // Generate unique S3 key
+      const timestamp = Date.now()
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+      const key = `pdfs/${timestamp}-${sanitizedFileName}`
+      
       // Upload directly to S3
-      const result = await uploadToS3(file, "application/pdf")
+      const result = await uploadToS3(buffer, key, "application/pdf")
       
       setUploadedUrl(result.url)
       onPDFUploaded(result.url, result.key, file.name)
