@@ -36,6 +36,13 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
         },
       },
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        // Session expires after 30 minutes of inactivity
+        flowType: 'pkce',
+      },
     },
   )
 
