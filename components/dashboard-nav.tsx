@@ -132,11 +132,11 @@ export default function DashboardNav({ user, profile }: DashboardNavProps) {
         <div className={`border-b border-gray-200 ${isCollapsed ? "p-4" : "p-6"}`}>
           {!isCollapsed ? (
             <Link href="/" className="block">
-              <img src="/images/blue.png" alt="Rotaract Mediterranean" className="h-40 -my-16 w-auto" />
+              <img src="/images/Blue.png" alt="Rotaract Mediterranean" className="h-40 -my-16 w-auto" />
             </Link>
           ) : (
             <Link href="/" className="flex justify-center">
-              <img src="/images/blue.png" alt="Rotaract Mediterranean" className="h-12 w-auto" />
+              <img src="/images/Blue.png" alt="Rotaract Mediterranean" className="h-12 w-auto" />
             </Link>
           )}
         </div>

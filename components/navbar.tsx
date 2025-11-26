@@ -108,7 +108,7 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
         <div className="hidden lg:flex items-center h-16 relative">
           <a href="/" className="flex items-center absolute left-0">
             <img 
-              src="/images/blue.png" 
+              src="/images/Blue.png" 
               alt="Rotaract Mediterranean" 
               className="h-36" 
               style={{ 
@@ -168,7 +168,7 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
         <div className="lg:hidden flex items-center justify-between h-16">
           <a href="/" className="flex items-center">
             <img 
-              src="/images/blue.png" 
+              src="/images/Blue.png" 
               alt="Rotaract Mediterranean" 
               className="h-40" 
               style={{ 
