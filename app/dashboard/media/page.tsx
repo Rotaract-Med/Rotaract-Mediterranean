@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Upload, ImageIcon, FileText } from "lucide-react"
 import { MediaUploadDialog } from "@/components/media-upload-dialog"
+import { DirectS3UploadDialog } from "@/components/direct-s3-upload-dialog"
 import { MediaCard } from "@/components/media-card"
 import { redirect } from "next/navigation"
 import { hasPermission } from "@/lib/permissions"
@@ -39,7 +40,12 @@ export default async function MediaPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Media Library</h1>
           <p className="text-sm sm:text-base text-gray-500 mt-1">Manage images and files for your website</p>
         </div>
-        {canUpload && <MediaUploadDialog />}
+        {canUpload && (
+          <div className="flex flex-col sm:flex-row gap-2">
+            <MediaUploadDialog />
+            <DirectS3UploadDialog />
+          </div>
+        )}
       </div>
 
       {error && (
