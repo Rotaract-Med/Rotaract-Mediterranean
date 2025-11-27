@@ -34,10 +34,19 @@ export function MediaUploadDialog() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Check file size (3MB limit for production due to Vercel limits)
+    // Base64 encoding increases size by ~33%, so 3MB file becomes ~4MB
+    const maxSize = 3 * 1024 * 1024 // 3MB
+    if (file.size > maxSize) {
+      setError(`File size too large. Maximum size is 3MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+      return
+    }
+
     // Set file metadata
     setFileName(file.name)
     setFileType(file.type)
     setFileSize(file.size)
+    setError(null)
 
     // Create preview URL
     const reader = new FileReader()
@@ -45,6 +54,9 @@ export function MediaUploadDialog() {
       const result = reader.result as string
       setBase64Data(result)
       setPreviewUrl(result)
+    }
+    reader.onerror = () => {
+      setError("Failed to read file. Please try again.")
     }
     reader.readAsDataURL(file)
   }
@@ -77,8 +89,17 @@ export function MediaUploadDialog() {
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Upload failed")
+        let errorMessage = "Upload failed"
+        try {
+          const error = await response.json()
+          errorMessage = error.error || errorMessage
+        } catch {
+          // If response is not JSON, use status text
+          errorMessage = response.status === 413 
+            ? "File too large. Maximum size is 3MB." 
+            : `Upload failed: ${response.statusText}`
+        }
+        throw new Error(errorMessage)
       }
 
       const result = await response.json()

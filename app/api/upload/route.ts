@@ -20,7 +20,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const body = await request.json()
+    // Parse JSON with error handling
+    let body
+    try {
+      body = await request.json()
+    } catch (jsonError) {
+      console.error("JSON parse error:", jsonError)
+      return NextResponse.json({ 
+        error: "Invalid request format. File may be too large (max 3MB recommended)." 
+      }, { status: 413 })
+    }
     const { file, fileName, title, description, fileType } = body
 
     if (!file || !fileName) {
