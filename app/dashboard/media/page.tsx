@@ -5,6 +5,7 @@ import { Upload, ImageIcon, FileText } from "lucide-react"
 import { MediaUploadDialog } from "@/components/media-upload-dialog"
 import { DirectS3UploadDialog } from "@/components/direct-s3-upload-dialog"
 import { MediaCard } from "@/components/media-card"
+import { GuidelinesInfoDialog } from "@/components/guidelines-info-dialog"
 import { redirect } from "next/navigation"
 import { hasPermission } from "@/lib/permissions"
 
@@ -41,9 +42,12 @@ export default async function MediaPage() {
           <p className="text-sm sm:text-base text-gray-500 mt-1">Manage images and files for your website</p>
         </div>
         {canUpload && (
-          <div className="flex flex-col sm:flex-row gap-2">
-            <MediaUploadDialog />
-            <DirectS3UploadDialog />
+          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+            <div className="flex gap-2">
+              <MediaUploadDialog />
+              <DirectS3UploadDialog />
+            </div>
+            <GuidelinesInfoDialog />
           </div>
         )}
       </div>

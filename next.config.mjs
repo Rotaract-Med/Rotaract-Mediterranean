@@ -1,5 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'flagcdn.com',
+        port: '',
+        pathname: '/w320/**',
+      },
+    ],
+  },
   webpack: (config, { isServer }) => {
     // Suppress warnings about large strings (base64 PDF images)
     config.infrastructureLogging = {
