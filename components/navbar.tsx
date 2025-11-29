@@ -40,14 +40,14 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
           bg: "bg-white/95 border-gray-200 shadow-sm",
           text: "text-gray-700 hover:text-[#193fa6]",
           mobileBg: "bg-white",
-          iconColor: "text-gray-700"
+          iconColor: "text-white"
         }
       case "awards":
         return {
           bg: "bg-black/60 border-[#D4AF37]/30",
           text: "text-[#D4AF37] hover:text-white",
           mobileBg: "bg-black",
-          iconColor: "text-[#D4AF37]"
+          iconColor: "text-gray-700"
         }
       case "medtimes":
         return {
@@ -115,7 +115,7 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
                 filter: variant === 'medtimes' || variant === 'dark' 
                   ? 'brightness(0) invert(1)' 
                   : variant === 'awards' 
-                    ? 'brightness(0) saturate(100%) invert(73%) sepia(55%) saturate(626%) hue-rotate(359deg) brightness(92%) contrast(87%)'
+                    ? 'brightness(0) invert(1)'
                     : 'none' 
               }}
             />
@@ -175,7 +175,7 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
                 filter: variant === 'medtimes' || variant === 'dark' 
                   ? 'brightness(0) invert(1)' 
                   : variant === 'awards' 
-                    ? 'brightness(0) saturate(100%) invert(73%) sepia(55%) saturate(626%) hue-rotate(359deg) brightness(92%) contrast(87%)'
+                    ? 'brightness(0) invert(1)'
                     : 'none' 
               }}
             />

@@ -84,7 +84,7 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
     <div className="min-h-screen bg-black">
       <Navbar variant="awards" />
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen flex items-center justify-center md:justify-start overflow-hidden">
         {/* Background - Video or Image */}
         <div className="absolute inset-0">
           {heroType === "video" && heroVideoUrl ? (
@@ -127,21 +127,19 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 text-center px-4 max-w-6xl mx-auto">
-          <div className="mb-8">
-            <p className="text-white text-sm font-light tracking-widest mb-4">by</p>
-            <div className="flex items-center justify-center gap-4 mb-2">
-              <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20">
-                <div className="w-8 h-8 border-2 border-white rounded-full relative">
-                  <div className="absolute inset-1 border border-white rounded-full" />
-                </div>
-              </div>
-              <span className="text-white font-semibold text-lg">Rotaract</span>
+        <div className="relative z-10 text-left px-4 md:px-36 max-w-6xl ">
+          <div className="">
+            <div className=" ">
+              <img 
+              src="/images/Blue.png" 
+              alt="Rotaract Mediterranean" 
+              className="h-36 brightness-0 invert" 
+              
+            />
             </div>
-            <p className="text-white text-xs tracking-wider opacity-80">MEDITERRANEAN</p>
           </div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-12 leading-tight">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-center md:text-left text-white mb-12 leading-tight">
             {title.split(' ').map((word, index) => (
               <span key={index}>
                 {word}
@@ -151,7 +149,7 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
           </h1>
 
           <div className="animate-bounce cursor-pointer" onClick={() => document.getElementById("intro")?.scrollIntoView({ behavior: "smooth" })}>
-            <p className="text-white text-sm mb-2">Discover more</p>
+            <p className="text-white text-sm mb-2 text-center">Discover more</p>
             <svg className="w-6 h-6 mx-auto text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
               <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
             </svg>
