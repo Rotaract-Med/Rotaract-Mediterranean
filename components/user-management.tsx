@@ -64,6 +64,7 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
       const { data, error, count } = await supabase
         .from("profiles")
         .select("*", { count: 'exact' })
+        .eq("project", "mdiomed")
         .order("created_at", { ascending: false })
 
       console.log("Query result:", { data, error, count })
