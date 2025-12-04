@@ -81,7 +81,22 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black relative">
+      {/* Global Floating Particles */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        {Array.from({ length: 50 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-[#FFD700] rounded-full opacity-50"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animation: `float ${5 + Math.random() * 10}s infinite ease-in-out`,
+              animationDelay: `${Math.random() * 5}s`,
+            }}
+          />
+        ))}
+      </div>
       <Navbar variant="awards" />
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center md:justify-start overflow-hidden">
@@ -175,42 +190,28 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
 
           {/* Award Categories */}
           <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="bg-white rounded-lg p-8 text-center">
-              <div className="w-20 h-20 mx-auto mb-6">
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                  <circle cx="50" cy="70" r="25" fill="#D4AF37" />
-                  <path d="M30 70 L50 20 L70 70" fill="#D4AF37" />
-                  <path d="M35 55 L50 30 L65 55" fill="#FFD700" />
-                </svg>
-              </div>
-              <h3 className="text-[#D4AF37] text-2xl font-bold mb-4">Prize<br />for Peace</h3>
+            <div className="bg-white rounded-lg overflow-hidden">
+              <img 
+                src="/images/awards/left.png" 
+                alt="Prize for Peace" 
+                className="w-full h-full object-cover"
+              />
             </div>
 
-            <div className="bg-white rounded-lg p-8 text-center">
-              <div className="w-20 h-20 mx-auto mb-6">
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                  <circle cx="50" cy="70" r="25" fill="#D4AF37" />
-                  <path d="M30 70 L50 20 L70 70" fill="#D4AF37" />
-                  <path d="M35 55 L50 30 L65 55" fill="#FFD700" />
-                </svg>
-              </div>
-              <h3 className="text-[#D4AF37] text-xl font-bold mb-2">Outstanding<br />Project Award</h3>
-              <div className="space-y-1 text-sm text-gray-700">
-                <p>| Best medLove</p>
-                <p>| Best medNature</p>
-                <p>| Best medCulture</p>
-              </div>
+            <div className="bg-white rounded-lg overflow-hidden">
+              <img 
+                src="/images/awards/middle.png" 
+                alt="Outstanding Project Award" 
+                className="w-full h-full object-cover"
+              />
             </div>
 
-            <div className="bg-white rounded-lg p-8 text-center">
-              <div className="w-20 h-20 mx-auto mb-6">
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                  <circle cx="50" cy="70" r="25" fill="#D4AF37" />
-                  <path d="M30 70 L50 20 L70 70" fill="#D4AF37" />
-                  <path d="M35 55 L50 30 L65 55" fill="#FFD700" />
-                </svg>
-              </div>
-              <h3 className="text-[#D4AF37] text-2xl font-bold mb-4">Best<br />Club Twinning<br />Award</h3>
+            <div className="bg-white rounded-lg overflow-hidden">
+              <img 
+                src="/images/awards/right.png" 
+                alt="Best Club Twinning Award" 
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
 
@@ -312,7 +313,7 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
       </section>
 
       {/* Award Categories Section */}
-      <section id="categories" className="py-32 px-4 bg-gradient-to-b from-black via-gray-900 to-black">
+      {/* <section id="categories" className="py-32 px-4 bg-gradient-to-b from-black via-gray-900 to-black">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="font-serif text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-[#D4AF37] mb-6">
@@ -346,10 +347,10 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Nomination Form Section */}
-      <section id="nomination-form" className="py-32 px-4 bg-gradient-to-b from-black via-gray-900 to-black">
+      {/* <section id="nomination-form" className="py-32 px-4 bg-gradient-to-b from-black via-gray-900 to-black">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
             <Award className="w-16 h-16 text-[#FFD700] mx-auto mb-6" />
@@ -460,7 +461,7 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
             </Button>
           </form>
         </div>
-      </section>
+      </section> */}
     </div>
   )
 }

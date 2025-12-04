@@ -2,6 +2,7 @@ import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, Leaf } from "lucide-react"
 import { Footer } from "@/components/footer"
+import Image from "next/image"
 
 export default function MedNaturePage() {
   return (
@@ -72,55 +73,132 @@ export default function MedNaturePage() {
             </div>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {/* SDG 7 - Affordable and Clean Energy */}
-                <div className="aspect-square bg-yellow-400 rounded-lg p-4 flex items-center justify-center">
-                  <div className="text-center text-gray-900">
-                    <div className="text-6xl font-bold mb-2">7</div>
-                    <p className="text-xs font-semibold">AFFORDABLE AND CLEAN ENERGY</p>
+                <a
+                  href="https://globalgoals.org/goals/7-affordable-and-clean-energy/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-7/GOAL_7_PRIMARY_ICON/GOAL_7_PNG/TheGlobalGoals_Icons_Color_Goal_7.png"
+                    alt="SDG 7 - Affordable and Clean Energy"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* SDG 12 - Responsible Consumption and Production */}
-                <div className="aspect-square bg-amber-600 rounded-lg p-4 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-6xl font-bold mb-2">12</div>
-                    <p className="text-xs font-semibold">RESPONSIBLE CONSUMPTION AND PRODUCTION</p>
+                <a
+                  href="https://globalgoals.org/goals/12-responsible-consumption-and-production/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-12/GOAL_12_PRIMARY_ICON/GOAL_12_PNG/TheGlobalGoals_Icons_Color_Goal_12.png"
+                    alt="SDG 12 - Responsible Consumption and Production"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* SDG 13 - Climate Action */}
-                <div className="aspect-square bg-green-700 rounded-lg p-4 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-6xl font-bold mb-2">13</div>
-                    <p className="text-xs font-semibold">CLIMATE ACTION</p>
+                <a
+                  href="https://globalgoals.org/goals/13-climate-action/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-13/GOAL_13_PRIMARY_ICON/GOAL_13_PNG/TheGlobalGoals_Icons_Color_Goal_13.png"
+                    alt="SDG 13 - Climate Action"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* SDG 14 - Life Below Water */}
-                <div className="aspect-square bg-blue-500 rounded-lg p-4 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-6xl font-bold mb-2">14</div>
-                    <p className="text-xs font-semibold">LIFE BELOW WATER</p>
+                <a
+                  href="https://globalgoals.org/goals/14-life-below-water/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-14/GOAL_14_PRIMARY_ICON/GOAL_14_PNG/TheGlobalGoals_Icons_Color_Goal_14.png"
+                    alt="SDG 14 - Life Below Water"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* SDG 15 - Life on Land */}
-                <div className="col-span-2 aspect-[2/1] bg-green-500 rounded-lg p-4 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-6xl font-bold mb-2">15</div>
-                    <p className="text-xs font-semibold">LIFE ON LAND</p>
+                <a
+                  href="https://globalgoals.org/goals/15-life-on-land/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-15/GOAL_15_PRIMARY_ICON/GOAL_15_PNG/TheGlobalGoals_Icons_Color_Goal_15.png"
+                    alt="SDG 15 - Life on Land"
+                    width={600}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* Rotaract Logo */}
-                <div className="col-span-2 aspect-[2/1] bg-white border-2 border-gray-200 rounded-lg p-6 flex items-center justify-center">
-                  <div className="w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center">
-                    <div className="w-12 h-12 border-4 border-blue-900 rounded-full relative">
-                      <div className="absolute inset-2 border-2 border-blue-900 rounded-full" />
-                    </div>
+                <a
+                  href="https://www.rotary.org/en/get-involved/rotaract-clubs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square bg-white border-2 border-gray-200 rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/pngegg.png"
+                    alt="Rotaract Logo"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-contain p-6 transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
           </div>

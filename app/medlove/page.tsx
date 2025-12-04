@@ -2,6 +2,7 @@ import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, Heart } from "lucide-react"
 import { Footer } from "@/components/footer"
+import Image from "next/image"
 
 export default function MedLovePage() {
   return (
@@ -74,63 +75,153 @@ export default function MedLovePage() {
             </div>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {/* SDG 1 - No Poverty */}
-                <div className="aspect-square bg-red-600 rounded-lg p-4 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-6xl font-bold mb-2">1</div>
-                    <p className="text-xs font-semibold">NO POVERTY</p>
+                <a
+                  href="https://globalgoals.org/goals/1-no-poverty/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-1/GOAL_1_PRIMARY_ICON/GOAL_1_PNG/TheGlobalGoals_Icons_Color_Goal_1.png"
+                    alt="SDG 1 - No Poverty"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* SDG 2 - Zero Hunger */}
-                <div className="aspect-square bg-yellow-500 rounded-lg p-4 flex items-center justify-center">
-                  <div className="text-center text-gray-900">
-                    <div className="text-6xl font-bold mb-2">2</div>
-                    <p className="text-xs font-semibold">ZERO HUNGER</p>
+                <a
+                  href="https://globalgoals.org/goals/2-zero-hunger/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-2/GOAL_2_PRIMARY_ICON/GOAL_2_PNG/TheGlobalGoals_Icons_Color_Goal_2.png"
+                    alt="SDG 2 - Zero Hunger"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* SDG 3 - Good Health and Well-Being */}
-                <div className="aspect-square bg-green-600 rounded-lg p-4 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-6xl font-bold mb-2">3</div>
-                    <p className="text-xs font-semibold">GOOD HEALTH AND WELL-BEING</p>
+                <a
+                  href="https://globalgoals.org/goals/3-good-health-and-well-being/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-3/GOAL_3_PRIMARY_ICON/GOAL_3_PNG/TheGlobalGoals_Icons_Color_Goal_3.png"
+                    alt="SDG 3 - Good Health and Well-Being"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* SDG 4 - Quality Education */}
-                <div className="aspect-square bg-red-700 rounded-lg p-4 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-6xl font-bold mb-2">4</div>
-                    <p className="text-xs font-semibold">QUALITY EDUCATION</p>
+                <a
+                  href="https://globalgoals.org/goals/4-quality-education/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-4/GOAL_4_PRIMARY_ICON/GOAL_4_PNG/TheGlobalGoals_Icons_Color_Goal_4.png"
+                    alt="SDG 4 - Quality Education"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* SDG 6 - Clean Water and Sanitation */}
-                <div className="aspect-square bg-cyan-400 rounded-lg p-4 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-6xl font-bold mb-2">6</div>
-                    <p className="text-xs font-semibold">CLEAN WATER AND SANITATION</p>
+                <a
+                  href="https://globalgoals.org/goals/6-clean-water-and-sanitation/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-6/GOAL_6_PRIMARY_ICON/GOAL_6_PNG/TheGlobalGoals_Icons_Color_Goal_6.png"
+                    alt="SDG 6 - Clean Water and Sanitation"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* SDG 10 - Reduced Inequalities */}
-                <div className="aspect-square bg-pink-600 rounded-lg p-4 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-6xl font-bold mb-2">10</div>
-                    <p className="text-xs font-semibold">REDUCED INEQUALITIES</p>
+                <a
+                  href="https://globalgoals.org/goals/10-reduced-inequalities/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-10/GOAL_10_PRIMARY_ICON/GOAL_10_PNG/TheGlobalGoals_Icons_Color_Goal_10.png"
+                    alt="SDG 10 - Reduced Inequalities"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* Rotaract Logo */}
-                <div className="col-span-2 aspect-[2/1] bg-white border-2 border-gray-200 rounded-lg p-6 flex items-center justify-center">
-                  <div className="w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center">
-                    <div className="w-12 h-12 border-4 border-blue-900 rounded-full relative">
-                      <div className="absolute inset-2 border-2 border-blue-900 rounded-full" />
-                    </div>
+                <a
+                  href="https://www.rotary.org/en/get-involved/rotaract-clubs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="col-span-2 aspect-[2/1] bg-white border-2 border-gray-200 rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/pngegg.png"
+                    alt="Rotaract Logo"
+                    width={600}
+                    height={300}
+                    className="w-full h-full object-contain p-6 transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
           </div>

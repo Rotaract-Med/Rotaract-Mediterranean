@@ -4,7 +4,7 @@ import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { FileText, Upload, X, Loader2, ExternalLink } from "lucide-react"
-import { uploadToS3 } from "@/lib/s3"
+import { createClient } from "@/lib/client"
 
 interface PDFS3UploadProps {
   onPDFUploaded: (pdfUrl: string, s3Key: string, fileName: string) => void
@@ -17,6 +17,7 @@ export function PDFS3Upload({ onPDFUploaded, currentPdfUrl }: PDFS3UploadProps) 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(currentPdfUrl || null)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -50,31 +51,147 @@ export function PDFS3Upload({ onPDFUploaded, currentPdfUrl }: PDFS3UploadProps) 
     }
   }
 
+  const uploadDirectlyToS3 = async (file: File): Promise<{ url: string; key: string }> => {
+    // Get presigned URL from backend
+    const presignResponse = await fetch("/api/upload/presigned", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fileName: file.name,
+        fileType: file.type,
+      }),
+    })
+
+    if (!presignResponse.ok) {
+      const errorData = await presignResponse.json()
+      throw new Error(errorData.error || "Failed to get upload URL")
+    }
+
+    const { presignedUrl, publicUrl, key } = await presignResponse.json()
+
+    // Upload directly to S3 using presigned URL with progress tracking
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 100
+          setUploadProgress(Math.round(percentComplete))
+        }
+      })
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 200 || xhr.status === 204) {
+          resolve({ url: publicUrl, key })
+        } else {
+          reject(new Error(`Upload failed with status ${xhr.status}`))
+        }
+      })
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Network error during upload'))
+      })
+
+      xhr.open('PUT', presignedUrl)
+      xhr.setRequestHeader('Content-Type', file.type)
+      xhr.send(file)
+    })
+  }
+
   const processFile = async (file: File) => {
     setError(null)
     setSelectedFile(file)
     setIsUploading(true)
+    setUploadProgress(0)
 
     try {
-      // Convert File to Buffer for S3 upload
-      const arrayBuffer = await file.arrayBuffer()
-      const buffer = Buffer.from(arrayBuffer)
+      // Check file size (allow up to 100MB for direct upload)
+      const maxSize = 100 * 1024 * 1024 // 100MB
+      const smallFileLimit = 3 * 1024 * 1024 // 3MB
+
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        throw new Error("You must be logged in to upload files")
+      }
+
+      let url: string
+      let key: string
+
+      // Use direct S3 upload for files larger than 3MB
+      if (file.size > smallFileLimit) {
+        if (file.size > maxSize) {
+          throw new Error(`File size too large. Maximum size is 100MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+        }
+
+        // Direct upload for large files
+        const result = await uploadDirectlyToS3(file)
+        url = result.url
+        key = result.key
+
+        // Save metadata to database
+        const { error: dbError } = await supabase
+          .from("media_library")
+          .insert({
+            file_name: file.name,
+            file_url: url,
+            file_type: file.type,
+            alt_text: null,
+            s3_key: key,
+            s3_url: url,
+            file_size: file.size,
+            uploaded_by: user.id,
+          })
+
+        if (dbError) {
+          console.error("Database error:", dbError)
+          throw new Error("Failed to save file metadata")
+        }
+      } else {
+        // Convert File to base64 data URI for small files
+        const reader = new FileReader()
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
+        
+        const dataURI = await base64Promise
+        
+        // Upload via API route for small files
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            file: dataURI,
+            fileName: file.name,
+            title: file.name,
+            fileType: "application/pdf",
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || "Failed to upload PDF")
+        }
+
+        const result = await response.json()
+        url = result.url
+        key = result.file.s3_key
+      }
       
-      // Generate unique S3 key
-      const timestamp = Date.now()
-      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const key = `pdfs/${timestamp}-${sanitizedFileName}`
-      
-      // Upload directly to S3
-      const result = await uploadToS3(buffer, key, "application/pdf")
-      
-      setUploadedUrl(result.url)
-      onPDFUploaded(result.url, result.key, file.name)
+      setUploadedUrl(url)
+      onPDFUploaded(url, key, file.name)
     } catch (err: any) {
+      console.error("Upload error:", err)
       setError(err.message || "Failed to upload PDF")
       setSelectedFile(null)
     } finally {
       setIsUploading(false)
+      setUploadProgress(0)
     }
   }
 
@@ -114,7 +231,21 @@ export function PDFS3Upload({ onPDFUploaded, currentPdfUrl }: PDFS3UploadProps) 
               <>
                 <Loader2 className="h-12 w-12 text-[#193fa6] mb-4 animate-spin" />
                 <p className="text-sm font-medium text-gray-700 mb-1">Uploading PDF to S3...</p>
-                <p className="text-xs text-gray-500">Please wait</p>
+                {uploadProgress > 0 && (
+                  <div className="w-full max-w-xs mt-2">
+                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                      <span>Progress</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-[#193fa6] h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-2">Please wait</p>
               </>
             ) : (
               <>

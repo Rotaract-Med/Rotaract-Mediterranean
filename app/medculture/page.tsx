@@ -1,7 +1,8 @@
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
-import { ChevronDown, Waves } from "lucide-react"
+import { ChevronDown, Palette, Waves } from "lucide-react"
 import { Footer } from "@/components/footer"
+import Image from "next/image"
 
 export default function MedCulturePage() {
   return (
@@ -75,39 +76,90 @@ export default function MedCulturePage() {
             </div>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 {/* SDG 16 - Peace, Justice and Strong Institutions */}
-                <div className="aspect-square bg-blue-600 rounded-lg p-2 sm:p-4 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-4xl sm:text-5xl md:text-6xl font-bold mb-1 sm:mb-2">16</div>
-                    <p className="text-[0.6rem] sm:text-xs font-semibold leading-tight">PEACE, JUSTICE AND STRONG INSTITUTIONS</p>
+                <a
+                  href="https://globalgoals.org/goals/16-peace-justice-and-strong-institutions/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-16/GOAL_16_PRIMARY_ICON/GOAL_16_PNG/TheGlobalGoals_Icons_Color_Goal_16.png"
+                    alt="SDG 16 - Peace, Justice and Strong Institutions"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* SDG 17 - Partnerships for the Goals */}
-                <div className="aspect-square bg-blue-800 rounded-lg p-2 sm:p-4 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-4xl sm:text-5xl md:text-6xl font-bold mb-1 sm:mb-2">17</div>
-                    <p className="text-[0.6rem] sm:text-xs font-semibold leading-tight">PARTNERSHIPS FOR THE GOALS</p>
+                <a
+                  href="https://globalgoals.org/goals/17-partnerships-for-the-goals/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/SDGs/goal-17/GOAL_17_PRIMARY_ICON/GOAL_17_PNG/TheGlobalGoals_Icons_Color_Goal_17.png"
+                    alt="SDG 17 - Partnerships for the Goals"
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
-                {/* UNESCO Logo Placeholder */}
-                <div className="col-span-2 aspect-[2/1] bg-gray-100 rounded-lg p-6 flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-sm font-semibold text-gray-600">UNESCO</p>
-                    <p className="text-xs text-gray-500">United Nations Educational, Scientific and Cultural Organization</p>
+                {/* UNESCO Logo */}
+                <a
+                  href="https://www.unesco.org/en"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/UNESCO_logo.png"
+                    alt="UNESCO Logo"
+                    width={600}
+                    height={300}
+                    className="w-full h-full object-contain p-6 transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
 
                 {/* Rotaract Logo */}
-                <div className="col-span-2 aspect-[2/1] bg-white border-2 border-gray-200 rounded-lg p-6 flex items-center justify-center">
-                  <div className="w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center">
-                    <div className="w-12 h-12 border-4 border-blue-900 rounded-full relative">
-                      <div className="absolute inset-2 border-2 border-blue-900 rounded-full" />
-                    </div>
+                <a
+                  href="https://www.rotary.org/en/get-involved/rotaract-clubs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square bg-white border-2 border-gray-200 rounded-lg overflow-hidden relative group block"
+                >
+                  <Image
+                    src="/images/pngegg.png"
+                    alt="Rotaract Logo"
+                    width={600}
+                    height={300}
+                    className="w-full h-full object-contain p-6 transition-all duration-300 group-hover:brightness-50"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 border-4 border-white scale-0 group-hover:scale-100 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
+                    <span className="text-white font-bold text-xl tracking-wide drop-shadow-2xl">Learn more</span>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
           </div>
