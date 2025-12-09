@@ -106,6 +106,12 @@ export default function DashboardNav({ user, profile }: DashboardNavProps) {
       icon: Award,
       roles: ["admin", "media_team"],
     },
+    {
+      name: "Events Submenu",
+      href: "/dashboard/events-submenu",
+      icon: Award,
+      roles: ["admin"],
+    },
   ]
 
   const filteredNavItems = navItems.filter((item) => item.roles.includes(profile?.role || "member"))

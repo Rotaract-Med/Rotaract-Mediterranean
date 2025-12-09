@@ -2,15 +2,43 @@
 
 import { useState, useEffect } from "react"
 import { Menu, X, ChevronDown } from "lucide-react"
+import { createClient } from "@/lib/client"
 
 interface NavbarProps {
   variant?: "light" | "dark" | "awards" | "medtimes"
+}
+
+interface EventsSubmenuItem {
+  id: string
+  title: string
+  url: string
+  display_order: number
+  is_active: boolean
 }
 
 export function Navbar({ variant = "dark" }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [eventsSubmenu, setEventsSubmenu] = useState<EventsSubmenuItem[]>([])
+
+  // Fetch events submenu items
+  useEffect(() => {
+    const fetchEventsSubmenu = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("events_submenu")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order")
+      
+      if (!error && data) {
+        setEventsSubmenu(data)
+      }
+    }
+    
+    fetchEventsSubmenu()
+  }, [])
 
   // Track scroll position
   useEffect(() => {
@@ -85,6 +113,17 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
     { name: "THE TEAM", href: "/team" },
     { name: "MEDTIMES", href: "/medtimes" },
     { name: "AWARDS", href: "/awards" },
+    ...(eventsSubmenu.length > 0 ? [{
+      name: "EVENTS", 
+      href: "#",
+      submenu: eventsSubmenu.map(item => ({
+        name: item.title,
+        href: item.url
+      }))
+    }] : [{
+      name: "EVENTS", 
+      href: "#"
+    }]),
     { 
       name: "INITIATIVES", 
       href: "#",
@@ -95,9 +134,8 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
       ]
     },
     // { name: "PARTNERS", href: "#" },
-    { name: "EVENTS", href: "#" },
     // { name: "MEDTRAVEL", href: "#" },
-    { name: "DIRECTORY", href: "#" },
+    // { name: "DIRECTORY", href: "#" },
     { name: "MEDSHOP", href: "https://store.rotaractmediterranean.com/" },
   ]
   
