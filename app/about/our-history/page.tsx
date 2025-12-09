@@ -147,7 +147,10 @@ function TimelineSection() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const index = Number(entry.target.getAttribute("data-index"))
-            setVisibleItems((prev) => [...new Set([...prev, index])])
+            setVisibleItems((prev) => {
+              if (prev.includes(index)) return prev
+              return [...prev, index]
+            })
           }
         })
       },
