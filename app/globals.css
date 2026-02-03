@@ -107,3 +107,256 @@ html {
     transform: translateY(-30px) translateX(5px);
   }
 }
+
+/* Coming Soon Page Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 1s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 1s ease-out 0.3s both;
+}
+
+.delay-500 {
+  animation-delay: 500ms;
+}
+
+.delay-1000 {
+  animation-delay: 1000ms;
+}
+
+/* Animated Clouds */
+.cloud {
+  position: absolute;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+  border-radius: 100px;
+  filter: blur(2px);
+}
+
+.cloud::before,
+.cloud::after {
+  content: "";
+  position: absolute;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 100px;
+}
+
+.cloud-1 {
+  width: 180px;
+  height: 60px;
+  top: 15%;
+  animation: float-cloud-1 40s infinite linear;
+}
+
+.cloud-1::before {
+  width: 80px;
+  height: 80px;
+  top: -40px;
+  left: 20px;
+}
+
+.cloud-1::after {
+  width: 100px;
+  height: 100px;
+  top: -50px;
+  right: 30px;
+}
+
+.cloud-2 {
+  width: 140px;
+  height: 50px;
+  top: 30%;
+  animation: float-cloud-2 50s infinite linear;
+  animation-delay: -10s;
+}
+
+.cloud-2::before {
+  width: 60px;
+  height: 60px;
+  top: -30px;
+  left: 15px;
+}
+
+.cloud-2::after {
+  width: 80px;
+  height: 80px;
+  top: -40px;
+  right: 20px;
+}
+
+.cloud-3 {
+  width: 200px;
+  height: 70px;
+  top: 60%;
+  animation: float-cloud-3 45s infinite linear;
+  animation-delay: -20s;
+}
+
+.cloud-3::before {
+  width: 90px;
+  height: 90px;
+  top: -45px;
+  left: 25px;
+}
+
+.cloud-3::after {
+  width: 110px;
+  height: 110px;
+  top: -55px;
+  right: 35px;
+}
+
+.cloud-4 {
+  width: 160px;
+  height: 55px;
+  top: 45%;
+  animation: float-cloud-4 55s infinite linear;
+  animation-delay: -30s;
+}
+
+.cloud-4::before {
+  width: 70px;
+  height: 70px;
+  top: -35px;
+  left: 18px;
+}
+
+.cloud-4::after {
+  width: 90px;
+  height: 90px;
+  top: -45px;
+  right: 25px;
+}
+
+.cloud-5 {
+  width: 120px;
+  height: 45px;
+  top: 75%;
+  animation: float-cloud-5 60s infinite linear;
+  animation-delay: -40s;
+}
+
+.cloud-5::before {
+  width: 50px;
+  height: 50px;
+  top: -25px;
+  left: 12px;
+}
+
+.cloud-5::after {
+  width: 70px;
+  height: 70px;
+  top: -35px;
+  right: 18px;
+}
+
+@keyframes float-cloud-1 {
+  from {
+    left: -250px;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes float-cloud-2 {
+  from {
+    left: -200px;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes float-cloud-3 {
+  from {
+    left: -250px;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes float-cloud-4 {
+  from {
+    left: -200px;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes float-cloud-5 {
+  from {
+    left: -180px;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+/* Flying Birds */
+.bird {
+  position: absolute;
+  animation: fly-bird 25s infinite linear;
+}
+
+.bird-1 {
+  top: 20%;
+  animation-duration: 30s;
+  animation-delay: 0s;
+}
+
+.bird-2 {
+  top: 35%;
+  animation-duration: 35s;
+  animation-delay: -10s;
+}
+
+.bird-3 {
+  top: 50%;
+  animation-duration: 28s;
+  animation-delay: -20s;
+}
+
+@keyframes fly-bird {
+  0% {
+    left: -50px;
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    transform: translateY(-15px) scale(1.1);
+  }
+  50% {
+    transform: translateY(0) scale(1);
+  }
+  75% {
+    transform: translateY(15px) scale(0.9);
+  }
+  100% {
+    left: 100%;
+    transform: translateY(0) scale(1);
+  }
+}

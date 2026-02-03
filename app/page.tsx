@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/server"
 import { HomePageClient } from "@/components/home-page-client"
+import { ComingSoonPage } from "@/components/coming-soon-page"
 
 export default async function RotaractMediterranean() {
+  // Check if site is in "Coming Soon" mode
+  const isComingSoon = process.env.NEXT_PUBLIC_COMING_SOON === "true"
+  
+  if (isComingSoon) {
+    return <ComingSoonPage />
+  }
   let heroSlides = null
   let collaboratorImages = null
   let countryRepImages = null
