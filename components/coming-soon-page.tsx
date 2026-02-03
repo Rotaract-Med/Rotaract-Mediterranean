@@ -33,14 +33,11 @@ export function ComingSoonPage() {
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
         {/* Rotaract Logo */}
         <div className="mb-12 animate-fade-in">
-          <Image
-            src="/images/blue.png"
-            alt="Rotaract Mediterranean"
-            width={250}
-            height={250}
-            className="drop-shadow-2xl invert"
-            priority
-          />
+              <img 
+                src="/images/Blue.png" 
+                alt="Mediterranean Rotaract" 
+                className="h-64 w-auto brightness-0 invert -my-10"
+              />
         </div>
 
         {/* Coming Soon Text */}
