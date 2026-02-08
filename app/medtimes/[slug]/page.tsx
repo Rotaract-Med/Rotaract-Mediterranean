@@ -2,6 +2,8 @@ import { createClient } from "@/lib/server"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
+import { GlobalBackground } from "@/components/global-Background"
+
 
 // Cache this page for 60 seconds, then revalidate in background
 export const revalidate = 60
@@ -53,13 +55,10 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative h-[70vh] overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${article.featured_image || "/placeholder.svg?height=1200&width=1600"})` }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        </div>
+      <section className="relative h-[40vh] overflow-hidden">
+          <div className="absolute inset-0">
+            <GlobalBackground />
+          </div>
 
         <div className="relative h-full max-w-4xl mx-auto px-6 flex flex-col justify-end pb-16">
           <span

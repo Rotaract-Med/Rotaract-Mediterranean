@@ -2,6 +2,7 @@ import { createClient } from "@/lib/server"
 import Link from "next/link"
 import { NewsletterForm } from "@/components/newsletter-form"
 import { Navbar } from "@/components/navbar"
+import { GlobalBackground } from "@/components/global-Background"
 
 // Cache this page for 30 seconds, then revalidate in background
 export const revalidate = 30
@@ -24,14 +25,9 @@ export default async function MEDTimesPage() {
       <Navbar variant="medtimes" />
       {/* Hero Section */}
       {featuredArticle && (
-        <section className="relative h-[90vh] overflow-hidden">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `url(${featuredArticle.featured_image || "/placeholder.svg?height=1200&width=1600"})`,
-            }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+        <section className="relative h-[60vh] overflow-hidden">
+          <div className="absolute inset-0">
+            <GlobalBackground />
           </div>
 
           <div className="relative h-full max-w-7xl mx-auto px-6 flex flex-col justify-end pb-20">
@@ -108,18 +104,11 @@ export default async function MEDTimesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {regularArticles.map((article: any) => (
             <Link key={article.id} href={`/medtimes/${article.slug}`}>
-              <article className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                <div className="relative h-64 overflow-hidden">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                    style={{
-                      backgroundImage: `url(${article.featured_image || "/placeholder.svg?height=400&width=600"})`,
-                    }}
-                  />
-                  <div className="absolute top-4 left-4 flex gap-2">
+              <article className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 h-full">
+                <div className="p-6 flex flex-col h-full">
+                  <div className="flex gap-2 mb-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${
-                        article.category === "Culture"
+                      className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${article.category === "Culture"
                           ? "bg-[#00bcd4]"
                           : article.category === "Nature"
                             ? "bg-[#4caf50]"
@@ -128,7 +117,7 @@ export default async function MEDTimesPage() {
                               : article.category === "Events"
                                 ? "bg-[#ff9800]"
                                 : "bg-[#9c27b0]"
-                      }`}
+                        }`}
                     >
                       {article.category}
                     </span>
@@ -141,13 +130,11 @@ export default async function MEDTimesPage() {
                       </span>
                     )}
                   </div>
-                </div>
 
-                <div className="p-6">
                   <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-[#193fa6] transition-colors line-clamp-2">
                     {article.title}
                   </h3>
-                  <p className="text-gray-600 mb-4 line-clamp-3 leading-relaxed">{article.excerpt}</p>
+                  <p className="text-gray-600 mb-4 line-clamp-4 leading-relaxed flex-grow">{article.excerpt}</p>
 
                   <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100">
                     <span className="font-medium">Rotaract Mediterranean</span>

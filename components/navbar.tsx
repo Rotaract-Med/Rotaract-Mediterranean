@@ -31,12 +31,12 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
         .select("*")
         .eq("is_active", true)
         .order("display_order")
-      
+
       if (!error && data) {
         setEventsSubmenu(data)
       }
     }
-    
+
     fetchEventsSubmenu()
   }, [])
 
@@ -99,8 +99,8 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
 
   const navItems = [
     { name: "HOME", href: "/" },
-    { 
-      name: "ABOUT US", 
+    {
+      name: "ABOUT US",
       href: "#",
       submenu: [
         { name: "WHO WE ARE", href: "/about/who-we-are" },
@@ -114,18 +114,18 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
     { name: "MEDTIMES", href: "/medtimes" },
     { name: "AWARDS", href: "/awards" },
     ...(eventsSubmenu.length > 0 ? [{
-      name: "EVENTS", 
+      name: "EVENTS",
       href: "#",
       submenu: eventsSubmenu.map(item => ({
         name: item.title,
         href: item.url
       }))
     }] : [{
-      name: "EVENTS", 
+      name: "EVENTS",
       href: "#"
     }]),
-    { 
-      name: "INITIATIVES", 
+    {
+      name: "INITIATIVES",
       href: "#",
       submenu: [
         { name: "MED LOVE", href: "/medlove" },
@@ -136,25 +136,25 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
     // { name: "PARTNERS", href: "#" },
     // { name: "MEDTRAVEL", href: "#" },
     // { name: "DIRECTORY", href: "#" },
-    { name: "MEDSHOP", href: "https://store.rotaractmediterranean.com/" },
+    { name: "MEDSHOP", href: "/medshop" },
   ]
-  
+
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b ${styles.bg}`}>
       <div className="container mx-auto px-4">
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center h-16 relative">
           <a href="/" className="flex items-center absolute left-0">
-            <img 
-              src="/images/Blue.png" 
-              alt="Rotaract Mediterranean" 
-              className="h-36" 
-              style={{ 
-                filter: variant === 'medtimes' || variant === 'dark' 
-                  ? 'brightness(0) invert(1)' 
-                  : variant === 'awards' 
+            <img
+              src="/images/Blue.png"
+              alt="Rotaract Mediterranean"
+              className="h-36"
+              style={{
+                filter: variant === 'medtimes' || variant === 'dark'
+                  ? 'brightness(0) invert(1)'
+                  : variant === 'awards'
                     ? 'brightness(0) invert(1)'
-                    : 'none' 
+                    : 'none'
               }}
             />
           </a>
@@ -205,16 +205,16 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
         {/* Mobile Navigation */}
         <div className="lg:hidden flex items-center justify-between h-16">
           <a href="/" className="flex items-center">
-            <img 
-              src="/images/Blue.png" 
-              alt="Rotaract Mediterranean" 
-              className="h-40" 
-              style={{ 
-                filter: variant === 'medtimes' || variant === 'dark' 
-                  ? 'brightness(0) invert(1)' 
-                  : variant === 'awards' 
+            <img
+              src="/images/Blue.png"
+              alt="Rotaract Mediterranean"
+              className="h-40"
+              style={{
+                filter: variant === 'medtimes' || variant === 'dark'
+                  ? 'brightness(0) invert(1)'
+                  : variant === 'awards'
                     ? 'brightness(0) invert(1)'
-                    : 'none' 
+                    : 'none'
               }}
             />
           </a>
