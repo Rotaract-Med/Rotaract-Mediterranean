@@ -125,19 +125,19 @@ function TimelineSection() {
       date: "DECEMBER 13TH, 2012",
       title: "1st MED PEACE FORUM",
       description: "The initial step towards reality, of a dream coming true, has been indeed taken during the first edition of the Mediterranean Peace Forum which took place in December 2012 in Pompeii, Italy. This event was a very essential occasion for the founding leaders to meet in person, and for the Med MDIO to be initiated together with the presence and the support of Mr. Wilfrid Wilkinson, Past President of the Rotary Foundation.",
-      image: "/images/tour_img.jpg"
+      image: "/images/italy.png"
     },
     {
       date: "FEBRUARY 13TH, 2013",
       title: "ROTARY RECOGNITION",
       description: "As a result of all the efforts, Rotary International officially recognized the Med MDIO on the 13th of February, 2013, with its first four districts: 2100, 9010, 2202, and 2450 (now 2451 and 2452).",
-      image: ""
+      image: "/images/recognition.jpeg"
     },
     {
       date: "APRIL 26TH, 2013",
       title: "1st MEDICON",
       description: "The first edition of the MEDICON was organized in April 2013 in Marrakech, Morocco, District 9010. Today, this very special event, the “Mediterranean Peace Forum” has been included in the Mediterranean Conference (Also known as MEDICON ) which takes place annually each Spring to gather the Med MDIO team members, all Mediterranean Rotarians and Rotaractors, as well as Rotary family members from all around the world.",
-      image: "/images/Marrakech-full.jpg"
+      image: "/images/Marrakech-full.png"
     }
   ]
 
@@ -236,7 +236,7 @@ function TimelineSection() {
                           alt={event.title}
                           width={500}
                           height={350}
-                          className="w-full h-64"
+                          className="w-full h-72 object-cover"
                         />
                         <div className="absolute inset-0" />
                       </div>

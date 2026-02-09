@@ -292,7 +292,6 @@ export function HomePageClient({
           </div>
         </div>
       </section>
-
       {/* Connect & Share */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -317,25 +316,25 @@ export function HomePageClient({
             </div>
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-6 bg-pink-50 rounded-lg">
+                <div className="text-center p-6 bg-pink-50 rounded-lg shadow-md">
                   <div className="text-3xl font-bold text-pink-600 mb-2">18</div>
                   <div className="text-sm text-gray-600">Countries</div>
                 </div>
-                <div className="text-center p-6 bg-blue-50 rounded-lg">
+                <div className="text-center p-6 bg-blue-50 rounded-lg shadow-md">
                   <div className="text-3xl font-bold text-blue-600 mb-2">1000+</div>
                   <div className="text-sm text-gray-600">Clubs</div>
                 </div>
-                <div className="text-center p-6 bg-green-50 rounded-lg">
-                  <div className="text-3xl font-bold text-green-600 mb-2">36</div>
+                <div className="text-center p-6 bg-green-50 rounded-lg shadow-md">
+                  <div className="text-3xl font-bold text-green-600 mb-2">26</div>
                   <div className="text-sm text-gray-600">Districts</div>
                 </div>
-                <div className="text-center p-6 bg-teal-50 rounded-lg">
+                <div className="text-center p-6 bg-teal-50 rounded-lg shadow-md">
                   <div className="text-3xl font-bold text-teal-600 mb-2">3</div>
                   <div className="text-sm text-gray-600">Continents</div>
                 </div>
               </div>
-              <div className="text-center p-6 bg-yellow-50 rounded-lg">
-                <div className="text-3xl font-bold text-yellow-600 mb-2">15007+</div>
+              <div className="text-center p-6 bg-yellow-50 rounded-lg shadow-md">
+                <div className="text-3xl font-bold text-yellow-600 mb-2 ">15007+</div>
                 <div className="text-sm text-gray-600">Rotaractors</div>
               </div>
             </div>

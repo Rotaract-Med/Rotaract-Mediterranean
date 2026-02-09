@@ -22,6 +22,13 @@ export default async function TeamPage() {
     .eq("section", "country_representatives")
     .order("display_order", { ascending: true })
 
+  // Fetch team structure image from media library
+  const { data: teamStructureImage } = await supabase
+    .from("media_library")
+    .select("*")
+    .eq("file_name", "medgeneral")
+    .single()
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Navbar variant="light" />
@@ -46,7 +53,21 @@ export default async function TeamPage() {
       </section>
 
       <TeamSectionToggle executiveBoard={executiveBoard || []} countryRepresentatives={countryRepresentatives || []} />
-
+      {teamStructureImage && (
+        <section>
+          <div>
+            <h1 className="text-5xl md:text-7xl justify-center items-center text-center font-script text-[#193fa6] mb-6">
+              Presidents Through History
+            </h1>
+            <h1></h1>
+            <img
+              src={teamStructureImage.s3_url || teamStructureImage.base64_data || teamStructureImage.file_url}
+              alt={teamStructureImage.alt_text || "Team Structure"}
+              className="mx-auto my-4 w-[90%] md:w-[50%] h-auto rounded-lg shadow-lg"
+            />
+          </div>
+        </section>
+      )}
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-[#193fa6] to-blue-600">
         <div className="container mx-auto px-4 text-center">
