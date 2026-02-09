@@ -137,7 +137,7 @@ export default function DistrictsCountriesPage() {
             {[
               { number: 3, label: "Continents" },
               { number: 18, label: "Countries" },
-              { number: 36, label: "Districts" },
+              { number: 26, label: "Districts" },
               { number: 1000, label: "Clubs" },
             ].map((stat, index) => (
               <div
