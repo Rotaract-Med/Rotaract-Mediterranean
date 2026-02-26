@@ -495,6 +495,7 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
 
 const awardCategories = [
   {
+    title: "",
     description: "Celebrating projects that support vulnerable communities, reduce discrimination, and spread love.",
     image: "/images/awards/love.png",
     color: "#FF69B4",
@@ -502,6 +503,7 @@ const awardCategories = [
     fileName: "MedLove Award",
   },
   {
+    title: "",
     description: "Honoring initiatives that protect the ecosystem, raise awareness, and promote eco-friendly mindsets and sustainable actions.",
     image: "/images/awards/nature.png",
     color: "#10B981",
@@ -509,6 +511,7 @@ const awardCategories = [
     fileName: "MedNature Award",
   },
   {
+    title: "",
     description: "Highlighting projects that preserve cultural heritage, promote unity in diversity, and encourage cultural exchange.",
     image: "/images/awards/culture.png",
     color: "#fb8a4f",
@@ -516,6 +519,7 @@ const awardCategories = [
     fileName: "MedCulture Award",
   },
   {
+    title: "",
     description: "Acknowledging efforts that promote peace, diversity, equity, and inclusion.",
     image: "/images/awards/peace.png",
     color: "#3B82F6",
@@ -523,6 +527,7 @@ const awardCategories = [
     fileName: "MedPeace Award",
   },
   {
+    title: "",
     description: "Celebrating successful partnerships and collaborations between Rotaract clubs in the Mediterranean.",
     image: "/images/awards/twinning.png",
     color: "#945093",
@@ -530,6 +535,7 @@ const awardCategories = [
     fileName: "MedTwinning Award",
   },
   {
+    title: "",
     description: "Recognizing outstanding clubs that actively participated in MED initiatives and events, demonstrating strong engagement and commitment.",
     image: "/images/awards/excellence.png",
     color: "#004aad",
