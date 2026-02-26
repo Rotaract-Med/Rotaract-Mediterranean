@@ -96,13 +96,15 @@ Always call `router.refresh()` after mutations to sync server data.
 Managed via numbered SQL migrations in `scripts/`. Key tables:
 
 - `profiles` - extends auth.users with role, full_name
-- `articles` - MEDTimes content with RLS policies
-- `team_members` - Executive board + country representatives (has `section` field)
-- `media_library` - Base64-encoded images (see `006_update_media_library_for_base64.sql`)
-- `hero_slides` - Homepage carousel
-- `award_blocks`, `canvas_page_elements` - Awards page builder system
+- `articles` - MEDTimes content with RLS policies; supports both HTML content and PDF uploads (`article_type`, `pdf_url`, `pdf_s3_key`)
+- `team_members` - Executive board + country representatives + collaborators (has `section` field: `executive_board`, `country_representatives`, `collaborators`)
+- `media_library` - Hybrid storage: base64-encoded images OR S3-hosted files (`s3_key`, `s3_url`, `file_size`, `uploaded_by`)
+- `hero_slides` - Homepage carousel with image/video support
+- `award_blocks`, `canvas_page_elements` - Awards page builder system with video support
+- `collaborator_images` - Homepage collaborator carousel images
+- `events_submenu` - Dynamic navigation links for Events dropdown
 
-Run new migrations directly in Supabase SQL editor in sequence.
+Run new migrations directly in Supabase SQL editor in sequence (currently up to `023_create_events_submenu.sql`).
 
 ## Development Workflow
 
@@ -122,27 +124,46 @@ Use `components/rich-text-editor.tsx` for WYSIWYG content (articles, nominations
 
 ### Media Selector
 
-`components/media-selector.tsx` fetches from `media_library` table and displays base64-encoded images. Used in article forms, hero slides, awards canvas.
+`components/media-selector.tsx` fetches from `media_library` table and displays images (base64 or S3-hosted). Used in article forms, hero slides, awards canvas. Automatically handles both storage types.
 
 ### Canvas Page Builder
 
-`components/canvas-page-builder.tsx` is a drag-and-drop visual editor storing absolutely positioned elements in `canvas_page_elements` table. Elements have `x_position`, `y_position`, `z_index`, `rotation`, `opacity`.
+`components/canvas-page-builder.tsx` is a drag-and-drop visual editor storing absolutely positioned elements in `canvas_page_elements` table. Elements have `x_position`, `y_position`, `z_index`, `rotation`, `opacity`. Supports images and videos.
+
+### File Upload Components
+
+- **`pdf-upload.tsx`** - Parse PDF content to HTML using `pdf-parser.ts` (for content extraction)
+- **`pdf-s3-upload.tsx`** - Direct PDF upload to S3/MinIO for embedded display
+- **`direct-s3-upload-dialog.tsx`** - Generic S3 file uploader for media library (images/videos)
+- **`media-upload-dialog.tsx`** - Legacy base64 image uploader (still used for smaller images)
+
+Use S3-based uploads (`lib/s3.ts`) for large files (videos, PDFs, high-res images). Use base64 for small icons/thumbnails.
+
+### Submenu Managers
+
+- **`events-submenu-manager.tsx`** - CRUD interface for dynamic Events navigation (admin dashboard)
+- **`awards-submenu-manager.tsx`** - CRUD interface for dynamic Awards navigation (admin dashboard)
 
 ## Route Organization
 
 ```
 app/
-  ├── page.tsx                    # Public homepage (hero slides)
-  ├── medtimes/                   # Public article listing + [slug] detail
-  ├── team/                       # Public team directory
+  ├── page.tsx                    # Public homepage (hero slides + collaborator carousel)
+  ├── medtimes/                   # Public article listing + [slug] detail (supports HTML & PDF)
+  ├── team/                       # Public team directory (exec/country reps/collaborators)
   ├── awards/                     # Public awards info page
+  ├── medculture/                 # MEDCulture project initiative page
+  ├── medlove/                    # MEDLove project initiative page
+  ├── mednature/                  # MEDNature project initiative page
+  ├── medshop/                    # MEDShop coming soon page
   ├── auth/login/                 # Supabase email/password auth
   └── dashboard/                  # Protected area (Server Component layout)
-      ├── articles/               # CRUD for articles (journalists/admins)
+      ├── articles/               # CRUD for articles (journalists/admins) - HTML or PDF
       ├── team/                   # CRUD for team members (admins only)
-      ├── media/                  # Media library management
-      ├── hero-slides/            # Homepage carousel editor
-      ├── awards/                 # Awards page builder + submissions
+      ├── media/                  # Media library management (base64 + S3)
+      ├── hero-slides/            # Homepage carousel editor (image + video support)
+      ├── awards/                 # Awards page builder + submissions (video support)
+      ├── events-submenu/         # Dynamic events navigation manager (admins only)
       └── settings/               # User profile + (admin) user management
 ```
 
@@ -161,6 +182,17 @@ app/
 4. Members redirected to `/` (public), staff roles access dashboard
 5. Layout fetches profile + checks role-specific permissions
 
+## Public Project Pages
+
+The app includes static landing pages for MDIO project initiatives:
+
+- **`/medculture`** - medCULTURE initiative (#MEDCULTURE challenge)
+- **`/medlove`** - medLOVE social effort (#MEDLOVE challenge)
+- **`/mednature`** - medNATURE environmental initiative (#MEDNATURE challenge)
+- **`/medshop`** - Coming soon page for merchandise store
+
+These are static client components with custom theming (blue for culture, pink for love, teal for nature, gold for shop). No CMS integration currently - content is hardcoded.
+
 ## Common Pitfalls
 
 - ❌ Using `createClient` from wrong path (server vs client)
@@ -168,10 +200,25 @@ app/
 - ❌ Not calling `router.refresh()` after Server Component data changes
 - ❌ Hardcoding role checks instead of using `hasPermission()`
 - ❌ Missing `await` when calling server `createClient()`
+- ❌ Using base64 upload for large files (>1MB) - use S3 instead
+- ❌ Not handling both `article_type` values when querying articles (`content` vs `pdf`)
+- ❌ Forgetting to clean up S3 files on delete (call `deleteFromS3(s3_key)`)
+- ❌ Missing environment variables for S3 (check `.env.local` has all `S3_*` vars)
 
 ## External Dependencies
 
-- Supabase (auth + PostgreSQL): Credentials in env vars `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- Vercel Analytics: Pre-configured via `@vercel/analytics`
-- Lucide React: Icon library (use semantic names)
-- React Hook Form + Zod: Form validation (see article/team forms)
+- **Supabase** (auth + PostgreSQL): Credentials in env vars `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- **S3/MinIO** (object storage): Configure via `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET_NAME`, `S3_PUBLIC_URL` (see `lib/s3.ts`)
+- **Vercel Analytics**: Pre-configured via `@vercel/analytics`
+- **Lucide React**: Icon library (use semantic names)
+- **React Hook Form + Zod**: Form validation (see article/team forms)
+- **pdf-parse**: Server-side PDF text extraction (`lib/pdf-parser.ts`)
+- **@aws-sdk/client-s3** + **@aws-sdk/lib-storage**: S3 client library
+
+### S3/MinIO Integration
+
+The app supports hybrid file storage:
+1. **Base64** in database (legacy, for small images)
+2. **S3/MinIO** for large files (videos, PDFs, high-res images)
+
+When `S3_ENDPOINT` is configured, use `uploadToS3()`, `deleteFromS3()`, and `generateS3Key()` from `lib/s3.ts`. Files are stored with public-read ACL at `{S3_PUBLIC_URL}/{bucket}/{key}`.

@@ -2,14 +2,12 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { Award, Trophy, Crown, Star, Sparkles, Calendar } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { Download, Award, FileText, Sparkles, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
 import { Navbar } from "@/components/navbar"
+import { createClient } from "@/lib/client"
+import { AwardsApplicationForm } from "@/components/awards-application-form"
 
 interface AwardsSettings {
   id: string
@@ -24,16 +22,26 @@ interface AwardsPageClientProps {
   settings: AwardsSettings | null
 }
 
+interface MediaFile {
+  id: string
+  file_name: string
+  file_url: string
+  s3_url?: string
+  file_type: string
+}
+
 export function AwardsPageClient({ settings }: AwardsPageClientProps) {
-  const { toast } = useToast()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState({
-    nominee_name: "",
-    award_category: "",
-    nomination_reason: "",
-    nominator_email: "",
-    nominator_name: "",
-    nominee_email: "",
+  const supabase = createClient()
+  const [downloadingFile, setDownloadingFile] = useState<string | null>(null)
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isApplicationFormOpen, setIsApplicationFormOpen] = useState(false)
+  const [countdown, setCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    phase: "" as "submission" | "voting" | "ended" | "",
   })
 
   const year = settings?.year || new Date().getFullYear().toString()
@@ -42,41 +50,110 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
   const heroVideoUrl = settings?.hero_video_url
   const heroType = settings?.hero_type || "image"
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+  // Generate particles data once and memoize
+  const globalParticles = useMemo(() =>
+    Array.from({ length: 50 }).map(() => ({
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: 5 + Math.random() * 10,
+      delay: Math.random() * 5,
+    })), []
+  )
 
-    try {
-      const response = await fetch("/api/awards/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
+  const heroParticles = useMemo(() =>
+    Array.from({ length: 20 }).map(() => ({
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: 5 + Math.random() * 10,
+      delay: Math.random() * 5,
+    })), []
+  )
 
-      if (response.ok) {
-        toast({
-          title: "Nomination Submitted!",
-          description: "Thank you for your nomination. We'll review it shortly.",
-        })
-        setFormData({
-          nominee_name: "",
-          award_category: "",
-          nomination_reason: "",
-          nominator_email: "",
-          nominator_name: "",
-          nominee_email: "",
-        })
+  // Countdown timer effect
+  useEffect(() => {
+    const calculateCountdown = () => {
+      const now = new Date()
+      const submissionEnd = new Date(`March 18, ${now.getFullYear()} 23:59:59`)
+      const votingEnd = new Date(`April 5, ${now.getFullYear()} 23:59:59`)
+      const submissionStart = new Date(`February 25, ${now.getFullYear()} 00:00:00`)
+
+      let targetDate: Date
+      let phase: "submission" | "voting" | "ended" | "" = ""
+
+      if (now < submissionStart) {
+        targetDate = submissionStart
+        phase = ""
+      } else if (now <= submissionEnd) {
+        targetDate = submissionEnd
+        phase = "submission"
+      } else if (now <= votingEnd) {
+        targetDate = votingEnd
+        phase = "voting"
       } else {
-        throw new Error("Submission failed")
+        phase = "ended"
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0, phase: "ended" })
+        return
       }
+
+      const difference = targetDate.getTime() - now.getTime()
+
+      if (difference > 0) {
+        setCountdown({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+          phase,
+        })
+      }
+    }
+
+    calculateCountdown()
+    const timer = setInterval(calculateCountdown, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  // Fetch media files from S3/media library
+  useEffect(() => {
+    const fetchMediaFiles = async () => {
+      const { data, error } = await supabase
+        .from("media_library")
+        .select("*")
+        .or('file_type.eq.application/pdf,file_type.like.application/%')
+
+      if (!error && data) {
+        setMediaFiles(data)
+      }
+      setLoading(false)
+    }
+
+    fetchMediaFiles()
+  }, [supabase])
+
+  const getFileForResource = (fileName: string) => {
+    return mediaFiles.find(file => file.file_name === fileName)
+  }
+
+  const handleDownload = async (fileName: string) => {
+    const file = getFileForResource(fileName)
+    if (!file) {
+      alert('File not found in media library. Please contact administrator.')
+      return
+    }
+
+    setDownloadingFile(fileName)
+    try {
+      // Use s3_url if available, otherwise use file_url
+      const downloadUrl = file.s3_url || file.file_url
+
+      // Open in new tab to trigger download
+      window.open(downloadUrl, '_blank')
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to submit nomination. Please try again.",
-        variant: "destructive",
-      })
+      console.error('Error:', error)
+      alert('Failed to download file. Please try again.')
     } finally {
-      setIsSubmitting(false)
+      setTimeout(() => setDownloadingFile(null), 1000)
     }
   }
 
@@ -84,15 +161,15 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
     <div className="min-h-screen bg-black relative">
       {/* Global Floating Particles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        {Array.from({ length: 50 }).map((_, i) => (
+        {globalParticles.map((particle, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-[#FFD700] rounded-full opacity-50"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `float ${5 + Math.random() * 10}s infinite ease-in-out`,
-              animationDelay: `${Math.random() * 5}s`,
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+              animation: `float ${particle.duration}s infinite ease-in-out`,
+              animationDelay: `${particle.delay}s`,
             }}
           />
         ))}
@@ -127,15 +204,15 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
 
         {/* Floating particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {Array.from({ length: 20 }).map((_, i) => (
+          {heroParticles.map((particle, i) => (
             <div
               key={i}
               className="absolute w-1 h-1 bg-[#FFD700] rounded-full opacity-50"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animation: `float ${5 + Math.random() * 10}s infinite ease-in-out`,
-                animationDelay: `${Math.random() * 5}s`,
+                left: `${particle.left}%`,
+                top: `${particle.top}%`,
+                animation: `float ${particle.duration}s infinite ease-in-out`,
+                animationDelay: `${particle.delay}s`,
               }}
             />
           ))}
@@ -145,12 +222,12 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
         <div className="relative z-10 text-left px-4 md:px-36 max-w-6xl ">
           <div className="">
             <div className=" ">
-              <img 
-              src="/images/Blue.png" 
-              alt="Rotaract Mediterranean" 
-              className="h-36 brightness-0 invert" 
-              
-            />
+              <img
+                src="/images/Blue.png"
+                alt="Rotaract Mediterranean"
+                className="h-36 brightness-0 invert"
+
+              />
             </div>
           </div>
 
@@ -175,326 +252,289 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
       {/* Introduction Section */}
       <section id="intro" className="py-20 px-4 bg-black text-white">
         <div className="max-w-6xl mx-auto">
+          {/* Countdown Timer */}
+          <div className="mb-12">
+            {countdown.phase === "submission" && (
+              <>
+                <p className="text-gray-400 text-sm mb-3 text-center">Time remaining for project submission:</p>
+                <div className="flex justify-center gap-4 mb-2">
+                  <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-[#D4AF37] rounded-lg p-4 min-w-[80px]">
+                    <div className="text-3xl font-bold text-[#D4AF37]">{countdown.days}</div>
+                    <div className="text-xs text-gray-400 uppercase">Days</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-[#D4AF37] rounded-lg p-4 min-w-[80px]">
+                    <div className="text-3xl font-bold text-[#D4AF37]">{countdown.hours}</div>
+                    <div className="text-xs text-gray-400 uppercase">Hours</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-[#D4AF37] rounded-lg p-4 min-w-[80px]">
+                    <div className="text-3xl font-bold text-[#D4AF37]">{countdown.minutes}</div>
+                    <div className="text-xs text-gray-400 uppercase">Minutes</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-[#D4AF37] rounded-lg p-4 min-w-[80px]">
+                    <div className="text-3xl font-bold text-[#D4AF37]">{countdown.seconds}</div>
+                    <div className="text-xs text-gray-400 uppercase">Seconds</div>
+                  </div>
+                </div>
+                <p className="text-gray-500 text-xs text-center">Deadline: March 18, 2026 at 11:59 PM</p>
+              </>
+            )}
+
+            {countdown.phase === "voting" && (
+              <>
+                <p className="text-gray-400 text-sm mb-3 text-center">Voting period - Time remaining:</p>
+                <div className="flex justify-center gap-4 mb-2">
+                  <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-[#3B82F6] rounded-lg p-4 min-w-[80px]">
+                    <div className="text-3xl font-bold text-[#3B82F6]">{countdown.days}</div>
+                    <div className="text-xs text-gray-400 uppercase">Days</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-[#3B82F6] rounded-lg p-4 min-w-[80px]">
+                    <div className="text-3xl font-bold text-[#3B82F6]">{countdown.hours}</div>
+                    <div className="text-xs text-gray-400 uppercase">Hours</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-[#3B82F6] rounded-lg p-4 min-w-[80px]">
+                    <div className="text-3xl font-bold text-[#3B82F6]">{countdown.minutes}</div>
+                    <div className="text-xs text-gray-400 uppercase">Minutes</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-[#3B82F6] rounded-lg p-4 min-w-[80px]">
+                    <div className="text-3xl font-bold text-[#3B82F6]">{countdown.seconds}</div>
+                    <div className="text-xs text-gray-400 uppercase">Seconds</div>
+                  </div>
+                </div>
+                <p className="text-gray-500 text-xs text-center">Voting ends: April 5, 2026 at 11:59 PM</p>
+              </>
+            )}
+
+            {countdown.phase === "ended" && (
+              <div className="text-center">
+                <p className="text-[#D4AF37] text-lg font-semibold">This year's awards cycle has concluded.</p>
+                <p className="text-gray-400 text-sm mt-2">Thank you for your participation!</p>
+              </div>
+            )}
+
+            {!countdown.phase && (
+              <div className="text-center">
+                <p className="text-gray-400 text-sm">Submissions open on February 25, 2026</p>
+              </div>
+            )}
+          </div>
+
           <div className="mb-12 text-center">
-            <p className="text-gray-400 leading-relaxed max-w-4xl mx-auto mb-8">
-              Every year, the Rotaract Mediterranean Executive Board together with the Country Representatives of each one of the member countries, choose 
+            <p className="text-gray-400 leading-relaxed max-w-4xl mx-auto  mb-8">
+              <span className="text-[#D4AF37] font-semibold">The Rotaract Mediterranean MDIO Awards</span> recognize the outstanding efforts of Rotaract clubs and are directly linked to the MED initiatives.
+              They celebrate the most impactful projects that have contributed to advancing the Sustainable Development Goals across the Mediterranean region.
+            </p>
+            {/* <p className="text-gray-400 leading-relaxed max-w-4xl mx-auto">
+              Every year, the Rotaract Mediterranean Executive Board together with the Country Representatives of each one of the member countries, choose
               the best project held by a Rotaract Club in the Mediterranean area. This is our attempt with{" "}
               <span className="text-[#D4AF37] font-semibold">The Mediterranean Outstanding Project Awards</span>,
               which are given during the Mediterranean Convention.
-            </p>
-            <p className="text-gray-400 leading-relaxed max-w-4xl mx-auto">
-              <span className="text-[#D4AF37] font-semibold">The Mediterranean Prize for Peace</span> recognizes the work done by a Mediterranean Rotaract Club promoting and, eventually, achieving peace in 
-              their communities, with <span className="text-[#D4AF37] font-semibold">the best Club Twinning Award</span>, recognizes the best collaboration between mediterranean clubs throughout the given year.
-            </p>
+            </p> */}
           </div>
 
           {/* Award Categories */}
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="bg-white rounded-lg overflow-hidden">
-              <img 
-                src="/images/awards/left.png" 
-                alt="Prize for Peace" 
-                className="w-full h-full object-cover"
-              />
-            </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            {awardCategories.map((category, idx) => {
+              const file = getFileForResource(category.fileName)
+              const isDownloading = downloadingFile === category.fileName
+              const isAvailable = !loading && file
 
-            <div className="bg-white rounded-lg overflow-hidden">
-              <img 
-                src="/images/awards/middle.png" 
-                alt="Outstanding Project Award" 
-                className="w-full h-full object-cover"
-              />
-            </div>
+              return (
+                <button
+                  key={idx}
+                  onClick={() => isAvailable && handleDownload(category.fileName)}
+                  disabled={!isAvailable || isDownloading}
+                  className="group relative bg-gradient-to-br from-gray-900 via-black to-gray-900 border-2 border-[#D4AF37] rounded-2xl p-8 hover:shadow-2xl hover:shadow-[#D4AF37]/30 transition-all duration-500 hover:scale-105 hover:border-[#FFD700] overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer text-left"
+                >
+                  {/* Glow effect */}
+                  <div
+                    className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500"
+                    style={{ backgroundColor: category.color }}
+                  />
 
-            <div className="bg-white rounded-lg overflow-hidden">
-              <img 
-                src="/images/awards/right.png" 
-                alt="Best Club Twinning Award" 
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-
-          <div className="text-center">
-            <Button className="bg-white text-black hover:bg-gray-100 px-8 py-3 rounded-md font-semibold">
-              Apply Now
-            </Button>
-            <p className="text-gray-500 text-sm mt-4">Countdown for project submission:</p>
-            <p className="text-[#D4AF37] text-sm font-semibold">(ENTER DATE - DECEMBER )</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Selection Process Section */}
-      <section className="py-20 px-4 bg-black text-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">Selection Process</h2>
-
-          <div className="space-y-16">
-            {/* Phase One */}
-            <div>
-              <h3 className="text-2xl font-bold text-[#D4AF37] mb-6">Phase One – Country Phase</h3>
-              <p className="text-gray-400 mb-6">
-                Phase one is the country phase. In this phase, each Rotaract Mediterranean MDIO member country shall submit a maximum of:
-              </p>
-              <ul className="list-disc list-inside text-gray-400 space-y-2 mb-6">
-                <li>5 projects for medLOVE OPA;</li>
-                <li>5 projects for medNature OPA;</li>
-                <li>5 projects for medCulture OPA;</li>
-                <li>3 projects for Peace Award;</li>
-                <li>3 projects for Best Twinning Award.</li>
-              </ul>
-              
-              <h4 className="text-xl font-semibold text-white mb-4">How?</h4>
-              <p className="text-gray-400 mb-4">Each country shall form a national selection committee comprised by:</p>
-              <ul className="list-disc list-inside text-gray-400 space-y-2 mb-6">
-                <li>Country Representative;</li>
-                <li>District Rotaract Representative;</li>
-                <li>District Rotaract Multipletor.</li>
-              </ul>
-              
-              <p className="text-gray-400 mb-6">
-                This committee will be in charge of choosing the projects which will represent the country in the international phase. Each country will have 
-                the freedom to set up their own internal projects. The process, although it certainly gives more connected or higher visibility, also ensures 
-                the selected projects are the best ones.
-              </p>
-              <p className="text-gray-400">
-                The selected projects must be submitted to the Rotaract Mediterranean MDIO's International Service Coordinator and through awards email 
-                before the 20th of March 2023 in order to start with the second phase.
-              </p>
-            </div>
-
-            {/* Phase Two */}
-            <div>
-              <h3 className="text-2xl font-bold text-[#D4AF37] mb-6">Phase Two – International Phase</h3>
-              <p className="text-gray-400 mb-6">
-                The Phase Two is the International Phase, where the submitted projects will be scrutinized by the International Committee of OPA.
-              </p>
-              <p className="text-gray-400 mb-6">
-                A maximum of 270 projects will be set for revision, assuming that all countries submit the maximum number of projects they are allowed to.
-              </p>
-              <p className="text-gray-400 mb-6">
-                There will be a maximum of 54 projects for each category.
-              </p>
-              <p className="text-gray-400 mb-6">
-                Country Representatives will analyze the projects provided by the International Service Coordinator and vote for the best ones, following the 
-                process stated below.
-              </p>
-              <p className="text-gray-400 mb-6">
-                The voting shall take place from 1st April 2023 until 30 April 2023.
-              </p>
-              
-              <h4 className="text-xl font-semibold text-white mb-4">How?</h4>
-              <p className="text-gray-400 mb-6">
-                The Country Representatives will vote on the submitted projects (out of the 54 maximum per project). They will assign 1,2,3,4,5,7,8,10 and 12 points to 
-                the chosen projects. Country Representatives will not be allowed to vote for their own country's projects.
-              </p>
-              <p className="text-gray-400 mb-6">
-                The Country Representatives may leave the remaining projects exceeding the 9 ranked without any score.
-              </p>
-              <p className="text-gray-400 mb-6">
-                In order to determine the winner projects from each category, the International Service Coordination team will count the submitted votes by the CRs.
-              </p>
-              <p className="text-gray-400 mb-6">
-                The project with the highest score will be the winner in that category.
-              </p>
-              <p className="text-gray-400">
-                Winners will be notified on 6<sup>th</sup> of May 2023 announced during the Mediterranean Convention.
-              </p>
-            </div>
-          </div>
-
-          <div className="text-center mt-16">
-            <Button className="bg-[#D4AF37] text-black hover:bg-[#FFD700] px-12 py-4 rounded-md font-bold text-lg">
-              Submit Your Project
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Award Categories Section */}
-      {/* <section id="categories" className="py-32 px-4 bg-gradient-to-b from-black via-gray-900 to-black">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="font-serif text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-[#D4AF37] mb-6">
-              Award Categories
-            </h2>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              Recognizing outstanding achievements across multiple domains of excellence
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {categories.map((category, idx) => (
-              <div
-                key={idx}
-                className="group relative bg-gradient-to-br from-gray-900 to-black border-2 border-[#D4AF37] rounded-2xl p-8 hover:shadow-2xl hover:shadow-[#FFD700]/20 transition-all duration-500 hover:scale-105 hover:border-[#FFD700]"
-              >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFD700] opacity-5 rounded-full blur-3xl group-hover:opacity-15 transition-opacity" />
-
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-[#FFD700] to-[#D4AF37] rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <category.icon className="w-8 h-8 text-black" />
+                  {/* Image container */}
+                  <div className="relative z-10 mb-6 group-hover:scale-110 transition-transform duration-500">
+                    <img
+                      src={category.image}
+                      alt={category.title}
+                      className="w-28 h-28 object-contain drop-shadow-2xl"
+                    />
                   </div>
 
-                  <h3 className="font-serif text-2xl font-bold text-white mb-4 group-hover:text-[#FFD700] transition-colors">
-                    {category.title}
-                  </h3>
+                  {/* Content */}
+                  <div className="relative z-10">
+                    <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-[#D4AF37] transition-colors">
+                      {category.title}
+                    </h3>
+                    <p className="text-gray-400 leading-relaxed text-sm mb-4">
+                      {category.description}
+                    </p>
 
-                  <p className="text-gray-400 leading-relaxed">{category.description}</p>
+                    {/* Download indicator */}
+                    <div className="flex items-center justify-center gap-2 text-[#D4AF37] font-semibold text-sm mt-4">
+                      {loading ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-[#D4AF37] border-t-transparent rounded-full"></div>
+                          <span>Loading...</span>
+                        </>
+                      ) : isDownloading ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-[#D4AF37] border-t-transparent rounded-full"></div>
+                          <span>Opening...</span>
+                        </>
+                      ) : isAvailable ? (
+                        <>
+                          <Download className="h-4 w-4" />
+                          <span>Click to Download Presentation</span>
+                        </>
+                      ) : (
+                        <span className="text-gray-500">Not Available</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Decorative corner accent */}
+                  <div
+                    className="absolute bottom-0 left-0 w-24 h-24 opacity-10 group-hover:opacity-20 transition-opacity"
+                    style={{ backgroundColor: category.color }}
+                  >
+                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                      <circle cx="0" cy="100" r="80" fill="currentColor" />
+                    </svg>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* General Guidelines Banner */}
+          <div className="relative mb-12 overflow-hidden">
+            {/* Decorative background elements */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37] via-[#FFD700] to-[#D4AF37] opacity-10"></div>
+            <div className="absolute top-0 left-0 w-64 h-64 bg-[#FFD700] rounded-full blur-3xl opacity-20 -translate-x-32 -translate-y-32"></div>
+            <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#D4AF37] rounded-full blur-3xl opacity-20 translate-x-32 translate-y-32"></div>
+
+            <div className="relative border-2 border-[#D4AF37] rounded-3xl p-8 md:p-12 bg-gradient-to-br from-gray-900/90 via-black/90 to-gray-900/90 backdrop-blur-sm">
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                {/* Left side - Icon and decorative elements */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-32 h-32 bg-gradient-to-br from-[#FFD700] to-[#D4AF37] rounded-2xl flex items-center justify-center transform rotate-3 hover:rotate-6 transition-transform duration-300">
+                    <Award className="w-16 h-16 text-black" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-[#FFD700] rounded-full flex items-center justify-center animate-pulse">
+                    <Sparkles className="w-4 h-4 text-black" />
+                  </div>
+                </div>
+
+                {/* Center - Content */}
+                <div className="flex-1 text-center md:text-left">
+                  <div className="inline-block px-4 py-1 bg-[#D4AF37]/20 border border-[#D4AF37] rounded-full mb-4">
+                    <span className="text-[#FFD700] text-sm font-semibold uppercase tracking-wide">Essential Resource</span>
+                  </div>
+                  <h3 className="text-3xl md:text-4xl font-bold text-white mb-3">
+                    Complete Awards Guidelines
+                  </h3>
+                  <p className="text-gray-300 leading-relaxed mb-1">
+                    Everything you need to know about the Mediterranean Outstanding Project Awards - eligibility criteria,
+                    submission requirements, evaluation process, and important deadlines.
+                  </p>
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-[#FFD700] text-sm mt-4">
+                    <FileText className="w-4 h-4" />
+                    <span>Comprehensive PDF Guide</span>
+                  </div>
+                </div>
+
+                {/* Right side - Download button */}
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      const file = getFileForResource("MED Awards Guidelines")
+                      if (file) {
+                        handleDownload("MED Awards Guidelines")
+                      } else {
+                        alert('Guidelines file not found. Please contact administrator.')
+                      }
+                    }}
+                    disabled={loading || downloadingFile === "MED Awards Guidelines"}
+                    className="group relative bg-gradient-to-r from-[#FFD700] to-[#D4AF37] text-black font-bold px-8 py-4 rounded-xl hover:shadow-2xl hover:shadow-[#FFD700]/50 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+                  >
+                    {loading || downloadingFile === "MED Awards Guidelines" ? (
+                      <>
+                        <div className="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full"></div>
+                        <span>Opening...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-5 h-5" />
+                        <span>Download Guidelines</span>
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section> */}
-
-      {/* Nomination Form Section */}
-      {/* <section id="nomination-form" className="py-32 px-4 bg-gradient-to-b from-black via-gray-900 to-black">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <Award className="w-16 h-16 text-[#FFD700] mx-auto mb-6" />
-            <h2 className="font-serif text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-[#D4AF37] mb-6">
-              Submit a Nomination
-            </h2>
-            <p className="text-xl text-gray-400">Nominate an outstanding individual or organization for recognition</p>
+            </div>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="bg-gradient-to-br from-gray-900 to-black border-2 border-[#D4AF37] rounded-2xl p-8 space-y-6"
-          >
-            <div>
-              <Label htmlFor="nominator_name" className="text-[#FFD700] font-semibold">
-                Your Name
-              </Label>
-              <Input
-                id="nominator_name"
-                value={formData.nominator_name}
-                onChange={(e) => setFormData({ ...formData, nominator_name: e.target.value })}
-                className="bg-black border-[#D4AF37] text-white focus:border-[#FFD700] mt-2"
-                placeholder="Your full name"
-              />
-            </div>
 
-            <div>
-              <Label htmlFor="nominator_email" className="text-[#FFD700] font-semibold">
-                Your Email *
-              </Label>
-              <Input
-                id="nominator_email"
-                type="email"
-                required
-                value={formData.nominator_email}
-                onChange={(e) => setFormData({ ...formData, nominator_email: e.target.value })}
-                className="bg-black border-[#D4AF37] text-white focus:border-[#FFD700] mt-2"
-                placeholder="your.email@example.com"
-              />
-            </div>
-
-            <div className="border-t border-[#D4AF37] pt-6 mt-6">
-              <h3 className="text-[#FFD700] font-semibold text-lg mb-4">Nominee Information</h3>
-            </div>
-
-            <div>
-              <Label htmlFor="nominee_name" className="text-[#FFD700] font-semibold">
-                Nominee Name *
-              </Label>
-              <Input
-                id="nominee_name"
-                required
-                value={formData.nominee_name}
-                onChange={(e) => setFormData({ ...formData, nominee_name: e.target.value })}
-                className="bg-black border-[#D4AF37] text-white focus:border-[#FFD700] mt-2"
-                placeholder="Full name of the nominee"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="nominee_email" className="text-[#FFD700] font-semibold">
-                Nominee Email
-              </Label>
-              <Input
-                id="nominee_email"
-                type="email"
-                value={formData.nominee_email}
-                onChange={(e) => setFormData({ ...formData, nominee_email: e.target.value })}
-                className="bg-black border-[#D4AF37] text-white focus:border-[#FFD700] mt-2"
-                placeholder="nominee.email@example.com"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="award_category" className="text-[#FFD700] font-semibold">
-                Award Category *
-              </Label>
-              <Input
-                id="award_category"
-                required
-                value={formData.award_category}
-                onChange={(e) => setFormData({ ...formData, award_category: e.target.value })}
-                className="bg-black border-[#D4AF37] text-white focus:border-[#FFD700] mt-2"
-                placeholder="e.g., Leadership Excellence"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="nomination_reason" className="text-[#FFD700] font-semibold">
-                Why should they receive this award? *
-              </Label>
-              <Textarea
-                id="nomination_reason"
-                required
-                value={formData.nomination_reason}
-                onChange={(e) => setFormData({ ...formData, nomination_reason: e.target.value })}
-                className="bg-black border-[#D4AF37] text-white focus:border-[#FFD700] mt-2 min-h-32"
-                placeholder="Describe their achievements and why they deserve recognition..."
-              />
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-[#FFD700] to-[#D4AF37] text-black font-bold text-lg py-6 hover:shadow-2xl hover:shadow-[#FFD700]/50 transition-all duration-300 hover:scale-105"
-            >
-              {isSubmitting ? "Submitting..." : "Submit Nomination"}
-            </Button>
-          </form>
         </div>
-      </section> */}
-    </div>
+      </section>
+
+      {/* Application Form Modal */}
+      <AwardsApplicationForm
+        isOpen={isApplicationFormOpen}
+        onClose={() => setIsApplicationFormOpen(false)}
+      />
+    </div >
   )
 }
 
-const categories = [
+const awardCategories = [
   {
-    title: "Leadership Excellence",
-    description: "Recognizing outstanding leadership that inspires and drives positive change in the community.",
-    icon: Crown,
+    title: "MedLove",
+    description: "Celebrating projects that demonstrate compassion, care, and social impact across the Mediterranean region.",
+    image: "/images/awards/love.png",
+    color: "#FF69B4",
+    colorLight: "#FFB6D9",
+    fileName: "MedLove Award",
   },
   {
-    title: "Community Impact",
-    description: "Honoring projects and initiatives that create lasting positive impact in local communities.",
-    icon: Award,
+    title: "MedNature",
+    description: "Honoring initiatives that protect our environment and promote sustainability in the Mediterranean.",
+    image: "/images/awards/nature.png",
+    color: "#10B981",
+    colorLight: "#6EE7B7",
+    fileName: "MedNature Award",
   },
   {
-    title: "Innovation Award",
-    description: "Celebrating creative and innovative approaches to solving community challenges.",
-    icon: Sparkles,
+    title: "MedCulture",
+    description: "Recognizing projects that preserve and celebrate the rich cultural heritage of the Mediterranean.",
+    image: "/images/awards/culture.png",
+    color: "#8B5CF6",
+    colorLight: "#C4B5FD",
+    fileName: "MedCulture Award",
   },
   {
-    title: "Youth Empowerment",
-    description: "Recognizing efforts to empower and develop the next generation of leaders.",
-    icon: Star,
+    title: "MedPeace",
+    description: "Acknowledging efforts that build bridges, foster dialogue, and promote peace across borders.",
+    image: "/images/awards/peace.png",
+    color: "#3B82F6",
+    colorLight: "#93C5FD",
+    fileName: "MedPeace Award",
   },
   {
-    title: "Sustainability Champion",
-    description: "Honoring commitment to environmental sustainability and responsible practices.",
-    icon: Trophy,
+    title: "MedTwinning",
+    description: "Celebrating successful partnerships and collaborations between Rotaract clubs in the Mediterranean.",
+    image: "/images/awards/twinning.png",
+    color: "#F59E0B",
+    colorLight: "#FCD34D",
+    fileName: "MedTwinning Award",
   },
   {
-    title: "International Cooperation",
-    description: "Celebrating successful cross-border collaboration and cultural exchange initiatives.",
-    icon: Award,
+    title: "MedExcellence",
+    description: "Honoring outstanding overall achievement and exceptional project execution that sets new standards.",
+    image: "/images/awards/excellence.png",
+    color: "#D4AF37",
+    colorLight: "#FFD700",
+    fileName: "MedExcellence Award",
   },
 ]
