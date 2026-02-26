@@ -69,13 +69,18 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
     })), []
   )
 
-  // Countdown timer effect
+  // Countdown timer effect (using CET timezone)
   useEffect(() => {
     const calculateCountdown = () => {
+      // Get current time in CET (Central European Time)
       const now = new Date()
-      const submissionEnd = new Date(`March 18, ${now.getFullYear()} 23:59:59`)
-      const votingEnd = new Date(`April 5, ${now.getFullYear()} 23:59:59`)
-      const submissionStart = new Date(`February 25, ${now.getFullYear()} 00:00:00`)
+      const currentYear = now.getFullYear()
+
+      // Create dates in CET timezone (Europe/Paris)
+      // Note: These are created as UTC dates representing CET time
+      const submissionEnd = new Date(`${currentYear}-03-18T23:59:59+01:00`)
+      const votingEnd = new Date(`${currentYear}-04-05T23:59:59+02:00`) // April is CEST (UTC+2)
+      const submissionStart = new Date(`${currentYear}-02-25T00:00:00+01:00`)
 
       let targetDate: Date
       let phase: "submission" | "voting" | "ended" | "" = ""
@@ -356,7 +361,7 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
                     <img
                       src={category.image}
                       alt={category.title}
-                      className="w-28 h-28 object-contain drop-shadow-2xl"
+                      className="w-32 h-32 object-contain drop-shadow-2xl"
                     />
                   </div>
 
@@ -384,7 +389,7 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
                       ) : isAvailable ? (
                         <>
                           <Download className="h-4 w-4" />
-                          <span>Click to Download Presentation</span>
+                          <span>Click to Download the application</span>
                         </>
                       ) : (
                         <span className="text-gray-500">Not Available</span>
@@ -490,51 +495,45 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
 
 const awardCategories = [
   {
-    title: "MedLove",
-    description: "Celebrating projects that demonstrate compassion, care, and social impact across the Mediterranean region.",
+    description: "Celebrating projects that support vulnerable communities, reduce discrimination, and spread love.",
     image: "/images/awards/love.png",
     color: "#FF69B4",
     colorLight: "#FFB6D9",
     fileName: "MedLove Award",
   },
   {
-    title: "MedNature",
-    description: "Honoring initiatives that protect our environment and promote sustainability in the Mediterranean.",
+    description: "Honoring initiatives that protect the ecosystem, raise awareness, and promote eco-friendly mindsets and sustainable actions.",
     image: "/images/awards/nature.png",
     color: "#10B981",
     colorLight: "#6EE7B7",
     fileName: "MedNature Award",
   },
   {
-    title: "MedCulture",
-    description: "Recognizing projects that preserve and celebrate the rich cultural heritage of the Mediterranean.",
+    description: "Highlighting projects that preserve cultural heritage, promote unity in diversity, and encourage cultural exchange.",
     image: "/images/awards/culture.png",
-    color: "#8B5CF6",
-    colorLight: "#C4B5FD",
+    color: "#fb8a4f",
+    colorLight: "#fb8a4f",
     fileName: "MedCulture Award",
   },
   {
-    title: "MedPeace",
-    description: "Acknowledging efforts that build bridges, foster dialogue, and promote peace across borders.",
+    description: "Acknowledging efforts that promote peace, diversity, equity, and inclusion.",
     image: "/images/awards/peace.png",
     color: "#3B82F6",
     colorLight: "#93C5FD",
     fileName: "MedPeace Award",
   },
   {
-    title: "MedTwinning",
     description: "Celebrating successful partnerships and collaborations between Rotaract clubs in the Mediterranean.",
     image: "/images/awards/twinning.png",
-    color: "#F59E0B",
-    colorLight: "#FCD34D",
+    color: "#945093",
+    colorLight: "#945093",
     fileName: "MedTwinning Award",
   },
   {
-    title: "MedExcellence",
-    description: "Honoring outstanding overall achievement and exceptional project execution that sets new standards.",
+    description: "Recognizing outstanding clubs that actively participated in MED initiatives and events, demonstrating strong engagement and commitment.",
     image: "/images/awards/excellence.png",
-    color: "#D4AF37",
-    colorLight: "#FFD700",
+    color: "#004aad",
+    colorLight: "#004aad",
     fileName: "MedExcellence Award",
   },
 ]
