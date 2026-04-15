@@ -40,7 +40,7 @@ export default function DistrictsCountriesPage() {
     {
       name: "France",
       code: "fr",
-      districts: ["Districts 1510, 1660, 1690, 1700,1720, 1730, 1750, 1760, 1770, 1790"],
+      districts: ["Districts 1510, 1520, 1660, 1680, 1690, 1700, 1710, 1720, 1730, 1750, 1760, 1770, 1790"],
     },
     {
       name: "Greece",
@@ -137,7 +137,7 @@ export default function DistrictsCountriesPage() {
             {[
               { number: 3, label: "Continents" },
               { number: 18, label: "Countries" },
-              { number: 26, label: "Districts" },
+              { number: 39, label: "Districts" },
               { number: 1000, label: "Clubs" },
             ].map((stat, index) => (
               <div

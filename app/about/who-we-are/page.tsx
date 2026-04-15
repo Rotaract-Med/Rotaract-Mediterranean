@@ -60,7 +60,7 @@ export default function WhoWeArePage() {
             {[
               { number: 3, label: "Continents", icon: Globe },
               { number: 18, label: "Countries", icon: MapPin },
-              { number: 26, label: "Districts", icon: Target },
+              { number: 39, label: "Districts", icon: Target },
               { number: 1000, label: "Clubs", icon: Users },
               { number: 15007, label: "Rotaractors", icon: Users },
             ].map((stat, index) => (

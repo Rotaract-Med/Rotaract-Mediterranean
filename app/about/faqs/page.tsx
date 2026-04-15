@@ -52,7 +52,7 @@ export default function FAQsPage() {
         {
           question: "Which districts are part of the Rotaract Mediterranean MDIO?",
           answer: [
-            "The Rotaract Mediterranean MDIO is composed by the following 26 Districts: 0055, 1510, 1660, 1690, 1700, 1720, 1730, 1750, 1760, 1770, 1790, 1910, 1912, 1913, 2032, 2041, 2060, 2071, 2072, 2080, 2090, 2100, 2110, 2120, 2201, 2202, 2203, 2420, 2430, 2440, 2451, 2452, 2470, 2483, 2484 and 9010.",
+            "The Rotaract Mediterranean MDIO is composed by the following 39 Districts: 1510, 1520, 1660, 1680, 1690, 1700, 1710, 1720, 1730, 1750, 1760, 1770, 1790, 1910, 1912, 1913, 2032, 2041, 2060, 2071, 2072, 2080, 2090, 2101, 2102, 2110, 2120, 2201, 2202, 2203, 2420, 2430, 2440, 2451, 2452, 2475, 2483, 2485 and 9010.",
           ],
         },
         {
