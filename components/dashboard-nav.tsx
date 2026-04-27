@@ -112,6 +112,12 @@ export default function DashboardNav({ user, profile }: DashboardNavProps) {
       icon: Award,
       roles: ["admin"],
     },
+    {
+      name: "MedShop Projects",
+      href: "/dashboard/medshop-projects",
+      icon: Award,
+      roles: ["admin"],
+    },
   ]
 
   const filteredNavItems = navItems.filter((item) => item.roles.includes(profile?.role || "member"))

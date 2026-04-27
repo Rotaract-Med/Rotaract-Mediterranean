@@ -16,11 +16,20 @@ interface EventsSubmenuItem {
   is_active: boolean
 }
 
+interface MedshopProject {
+  id: string
+  title: string
+  url: string
+  display_order: number
+  is_active: boolean
+}
+
 export function Navbar({ variant = "dark" }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
   const [isScrolled, setIsScrolled] = useState(false)
   const [eventsSubmenu, setEventsSubmenu] = useState<EventsSubmenuItem[]>([])
+  const [medshopProjects, setMedshopProjects] = useState<MedshopProject[]>([])
 
   // Fetch events submenu items
   useEffect(() => {
@@ -38,6 +47,21 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
     }
 
     fetchEventsSubmenu()
+
+    const fetchMedshopProjects = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("medshop_projects")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order")
+
+      if (!error && data) {
+        setMedshopProjects(data)
+      }
+    }
+
+    fetchMedshopProjects()
   }, [])
 
   // Track scroll position
@@ -136,7 +160,18 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
     // { name: "PARTNERS", href: "#" },
     // { name: "MEDTRAVEL", href: "#" },
     // { name: "DIRECTORY", href: "#" },
-    { name: "MEDSHOP", href: "/medshop" },
+    {
+      name: "MEDSHOP",
+      href: "#",
+      medshopMenu: true,
+      submenu: [
+        ...(medshopProjects.length > 0 ? medshopProjects.map(item => ({
+          name: item.title,
+          href: item.url,
+          isProject: true,
+        })) : []),
+      ],
+    },
   ]
 
   return (
@@ -176,15 +211,45 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
                     {openSubmenu === item.name && (
                       <div className="absolute top-full left-0 pt-2">
                         <div className="py-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200">
-                          {item.submenu.map((subItem) => (
-                            <a
-                              key={subItem.name}
-                              href={subItem.href}
-                              className="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-[#193fa6] transition-colors"
-                            >
-                              {subItem.name}
-                            </a>
-                          ))}
+                          {(item as any).medshopMenu ? (
+                            <>
+                              <a
+                                href="/medshop"
+                                className="block px-4 py-2 text-xs font-semibold text-gray-900 hover:bg-gray-100 hover:text-[#193fa6] transition-colors"
+                              >
+                                MEDSHOP
+                              </a>
+                              {item.submenu.length > 0 && (
+                                <>
+                                  <div className="px-4 pt-3 pb-1">
+                                    <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Projects</span>
+                                  </div>
+                                  <div className="border-t border-gray-100 mb-1" />
+                                  {item.submenu.map((subItem) => (
+                                    <a
+                                      key={subItem.name}
+                                      href={subItem.href}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-[#193fa6] transition-colors"
+                                    >
+                                      {subItem.name}
+                                    </a>
+                                  ))}
+                                </>
+                              )}
+                            </>
+                          ) : (
+                            item.submenu.map((subItem) => (
+                              <a
+                                key={subItem.name}
+                                href={subItem.href}
+                                className="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-[#193fa6] transition-colors"
+                              >
+                                {subItem.name}
+                              </a>
+                            ))
+                          )}
                         </div>
                       </div>
                     )}
@@ -245,10 +310,28 @@ export function Navbar({ variant = "dark" }: NavbarProps) {
                     </button>
                     {openSubmenu === item.name && (
                       <div className="ml-4 mt-2 space-y-1">
+                        {(item as any).medshopMenu && (
+                          <>
+                            <a
+                              href="/medshop"
+                              onClick={() => { setIsOpen(false); setOpenSubmenu(null) }}
+                              className="block py-2 px-4 rounded-lg text-sm font-semibold text-gray-200 hover:text-white transition-colors"
+                            >
+                              MEDSHOP
+                            </a>
+                            {item.submenu.length > 0 && (
+                              <div className="px-4 pt-2 pb-1">
+                                <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Projects</span>
+                              </div>
+                            )}
+                          </>
+                        )}
                         {item.submenu.map((subItem) => (
                           <a
                             key={subItem.name}
                             href={subItem.href}
+                            target={(item as any).medshopMenu ? "_blank" : undefined}
+                            rel={(item as any).medshopMenu ? "noopener noreferrer" : undefined}
                             onClick={() => {
                               setIsOpen(false)
                               setOpenSubmenu(null)
