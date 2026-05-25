@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/lib/client"
-import { Save, ImageIcon, Video, Upload } from "lucide-react"
+import { Save, ImageIcon, Video, Upload, X } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Switch } from "@/components/ui/switch"
 
 interface AwardsSettingsFormProps {
   settings: any
@@ -23,12 +24,15 @@ export function AwardsSettingsForm({ settings, mediaFiles }: AwardsSettingsFormP
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
   const [showMediaSelector, setShowMediaSelector] = useState(false)
+  const [showContentVideoSelector, setShowContentVideoSelector] = useState(false)
   const [formData, setFormData] = useState({
     year: settings?.year || new Date().getFullYear().toString(),
     title: settings?.title || "The Outstanding Project Awards",
     background_image: settings?.background_image || "",
     hero_video_url: settings?.hero_video_url || "",
     hero_type: settings?.hero_type || "video",
+    content_video_url: settings?.content_video_url || "",
+    content_video_enabled: settings?.content_video_enabled ?? false,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,6 +50,8 @@ export function AwardsSettingsForm({ settings, mediaFiles }: AwardsSettingsFormP
           background_image: formData.background_image,
           hero_video_url: formData.hero_video_url,
           hero_type: formData.hero_type,
+          content_video_url: formData.content_video_url,
+          content_video_enabled: formData.content_video_enabled,
           updated_at: new Date().toISOString(),
         })
         .eq("id", settings.id)
@@ -78,6 +84,11 @@ export function AwardsSettingsForm({ settings, mediaFiles }: AwardsSettingsFormP
   const selectVideo = (videoUrl: string) => {
     setFormData({ ...formData, hero_video_url: videoUrl })
     setShowMediaSelector(false)
+  }
+
+  const selectContentVideo = (videoUrl: string) => {
+    setFormData({ ...formData, content_video_url: videoUrl })
+    setShowContentVideoSelector(false)
   }
 
   // Filter media files by type
@@ -266,13 +277,104 @@ export function AwardsSettingsForm({ settings, mediaFiles }: AwardsSettingsFormP
               </TabsContent>
             </Tabs>
           </div>
-
-          <Button type="submit" disabled={isSaving} className="w-full bg-[#193fa6] hover:bg-[#142f7a]">
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Saving..." : "Save Settings"}
-          </Button>
         </CardContent>
       </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle>Content Video</CardTitle>
+              <CardDescription>
+                Optional video shown next to the hero title and "Discover more" arrow. Toggle off to hide it on the awards page.
+              </CardDescription>
+            </div>
+            <Switch
+              checked={formData.content_video_enabled}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, content_video_enabled: checked })
+              }
+            />
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {formData.content_video_url && (
+            <div className="relative w-full max-w-md h-48 rounded-lg overflow-hidden border-2 border-gray-200 bg-black">
+              <video
+                src={formData.content_video_url}
+                className="w-full h-full object-cover"
+                controls
+                muted
+              />
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, content_video_url: "" })}
+                className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full p-1.5"
+                aria-label="Clear video"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowContentVideoSelector(!showContentVideoSelector)}
+            className="w-full"
+          >
+            <Video className="h-4 w-4 mr-2" />
+            {formData.content_video_url ? "Change Video" : "Select Video from Library"}
+          </Button>
+          <div>
+            <Label htmlFor="content_video_url" className="text-sm">Or enter Video URL</Label>
+            <Input
+              id="content_video_url"
+              value={formData.content_video_url}
+              onChange={(e) => setFormData({ ...formData, content_video_url: e.target.value })}
+              placeholder="https://example.com/video.mp4"
+              className="mt-2"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Direct URL to video file (.mp4 recommended)
+            </p>
+          </div>
+          {showContentVideoSelector && videoFiles.length > 0 && (
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <h3 className="font-semibold mb-3">Select Video from Media Library</h3>
+              <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                {videoFiles.map((file) => {
+                  const videoUrl = file.s3_url || file.file_url
+                  return (
+                    <button
+                      key={file.id}
+                      type="button"
+                      onClick={() => selectContentVideo(videoUrl)}
+                      className="relative aspect-video rounded-lg overflow-hidden border-2 border-transparent hover:border-[#193fa6] transition-all bg-black"
+                    >
+                      <video src={videoUrl} className="w-full h-full object-cover" muted />
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-2">
+                        <p className="text-xs text-white truncate">{file.file_name}</p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+          {showContentVideoSelector && videoFiles.length === 0 && (
+            <div className="border rounded-lg p-4 bg-gray-50 text-center">
+              <Video className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+              <p className="text-sm text-gray-600">No videos in media library</p>
+              <p className="text-xs text-gray-500 mt-1">Upload videos from the Media page</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Button type="submit" disabled={isSaving} className="w-full bg-[#193fa6] hover:bg-[#142f7a] mt-6">
+        <Save className="h-4 w-4 mr-2" />
+        {isSaving ? "Saving..." : "Save Settings"}
+      </Button>
     </form>
   )
 }

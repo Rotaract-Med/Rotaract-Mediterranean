@@ -2,12 +2,135 @@
 
 import type React from "react"
 
-import { useState, useEffect, useMemo } from "react"
-import { Download, Award, FileText, Sparkles, ArrowRight } from "lucide-react"
+import { useRef, useState, useEffect, useMemo } from "react"
+import { Download, Award, FileText, Sparkles, ArrowRight, Play, Pause, Volume2, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Navbar } from "@/components/navbar"
 import { createClient } from "@/lib/client"
 import { AwardsApplicationForm } from "@/components/awards-application-form"
+
+function ContentVideoPlayer({ src }: { src: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isPlaying, setIsPlaying] = useState(true)
+  const [isMuted, setIsMuted] = useState(true)
+  const [progress, setProgress] = useState(0)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [showControls, setShowControls] = useState(false)
+
+  const fmt = (s: number) => {
+    const m = Math.floor(s / 60)
+    const sec = Math.floor(s % 60)
+    return `${m}:${sec.toString().padStart(2, "0")}`
+  }
+
+  const revealFor = (ms = 3000) => {
+    setShowControls(true)
+    if (hideTimer.current) clearTimeout(hideTimer.current)
+    hideTimer.current = setTimeout(() => setShowControls(false), ms)
+  }
+
+  const togglePlay = () => {
+    const video = videoRef.current
+    if (!video) return
+    if (video.paused) { video.play().catch(() => { }) } else { video.pause() }
+  }
+
+  const toggleMute = () => {
+    const video = videoRef.current
+    if (!video) return
+    video.muted = !video.muted
+    setIsMuted(video.muted)
+  }
+
+  const handleTimeUpdate = () => {
+    const video = videoRef.current
+    if (!video || !video.duration) return
+    setCurrentTime(video.currentTime)
+    setProgress((video.currentTime / video.duration) * 100)
+  }
+
+  const seek = (clientX: number, rect: DOMRect) => {
+    const video = videoRef.current
+    if (!video || !video.duration) return
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+    video.currentTime = ratio * video.duration
+  }
+
+  const handleSeekClick = (e: React.MouseEvent<HTMLDivElement>) =>
+    seek(e.clientX, e.currentTarget.getBoundingClientRect())
+
+  const handleSeekTouch = (e: React.TouchEvent<HTMLDivElement>) =>
+    seek(e.touches[0].clientX, e.currentTarget.getBoundingClientRect())
+
+  return (
+    <div
+      className="relative w-full aspect-video rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-2xl shadow-black/60 bg-black"
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}
+    >
+      <video
+        ref={videoRef}
+        src={src}
+        className="w-full h-full object-cover cursor-pointer"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={() => setDuration(videoRef.current?.duration ?? 0)}
+        onClick={() => { togglePlay(); revealFor() }}
+        disablePictureInPicture
+        controlsList="nodownload noplaybackrate noremoteplayback"
+      />
+
+      {/* Controls — hidden until hover or tap */}
+      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-3 pt-8 pb-2 transition-opacity duration-200 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+        {/* Progress bar — py-2 gives a large touch/click target while bar stays slim */}
+        <div
+          className="w-full py-2 cursor-pointer"
+          onClick={handleSeekClick}
+          onTouchStart={handleSeekTouch}
+        >
+          <div className="w-full h-1 bg-white/30 rounded-full relative">
+            <div
+              className="h-full bg-[#D4AF37] rounded-full relative"
+              style={{ width: `${progress}%` }}
+            >
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-[#D4AF37] rounded-full shadow-md" />
+            </div>
+          </div>
+        </div>
+        {/* Buttons + time */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); togglePlay() }}
+            className="text-white hover:text-[#D4AF37] transition-colors p-1.5 rounded-full flex-shrink-0"
+            aria-label={isPlaying ? "Pause" : "Play"}
+          >
+            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); toggleMute() }}
+            className="text-white hover:text-[#D4AF37] transition-colors p-1.5 rounded-full flex-shrink-0"
+            aria-label={isMuted ? "Unmute" : "Mute"}
+          >
+            {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+          </button>
+          <span className="text-white/70 text-xs ml-1 tabular-nums">
+            {fmt(currentTime)} / {fmt(duration)}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 interface AwardsSettings {
   id: string
@@ -16,6 +139,8 @@ interface AwardsSettings {
   background_image: string | null
   hero_video_url: string | null
   hero_type: "image" | "video"
+  content_video_url: string | null
+  content_video_enabled: boolean
 }
 
 interface AwardsPageClientProps {
@@ -49,6 +174,8 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
   const backgroundImage = settings?.background_image
   const heroVideoUrl = settings?.hero_video_url
   const heroType = settings?.hero_type || "image"
+  const contentVideoUrl = settings?.content_video_url
+  const showContentVideo = Boolean(settings?.content_video_enabled && contentVideoUrl)
 
   // Generate particles data once and memoize
   const globalParticles = useMemo(() =>
@@ -181,7 +308,7 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
       </div>
       <Navbar variant="awards" />
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center md:justify-start overflow-hidden">
+      <section className={`relative min-h-screen lg:h-screen flex ${showContentVideo ? "items-start py-20" : "items-center py-0"} lg:items-center lg:py-0 justify-center md:justify-start overflow-hidden`}>
         {/* Background - Video or Image */}
         <div className="absolute inset-0">
           {heroType === "video" && heroVideoUrl ? (
@@ -224,19 +351,18 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 text-left px-4 md:px-36 max-w-6xl ">
+        <div className={`relative z-10 text-left px-4 md:px-36 ${showContentVideo ? "lg:w-[46%] lg:px-0 lg:pl-36 lg:flex-shrink-0" : "max-w-6xl"}`}>
           <div className="">
             <div className=" ">
               <img
                 src="/images/Blue.png"
                 alt="Rotaract Mediterranean"
-                className="h-36 brightness-0 invert"
-
+                className="h-20 sm:h-28 md:h-36 brightness-0 invert"
               />
             </div>
           </div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-center md:text-left text-white mb-12 leading-tight">
+          <h1 className={`font-bold text-center md:text-left text-white mb-8 md:mb-12 leading-tight ${showContentVideo ? "text-4xl sm:text-5xl md:text-6xl lg:text-7xl" : "text-4xl sm:text-5xl md:text-7xl lg:text-8xl"}`}>
             {title.split(' ').map((word, index) => (
               <span key={index}>
                 {word}
@@ -251,7 +377,21 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
               <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
             </svg>
           </div>
+
+          {/* Mobile/tablet: inline video below the text */}
+          {showContentVideo && (
+            <div className="mt-10 w-full lg:hidden">
+              <ContentVideoPlayer src={contentVideoUrl!} />
+            </div>
+          )}
         </div>
+
+        {/* Desktop: video anchored to the right side of the hero, allowed to cover the background */}
+        {showContentVideo && (
+          <div className="hidden lg:block absolute top-1/2 -translate-y-1/2 right-6 xl:right-12 2xl:right-20 z-10 w-[52%] xl:w-[50%] 2xl:w-[48%] max-w-[900px]">
+            <ContentVideoPlayer src={contentVideoUrl!} />
+          </div>
+        )}
       </section>
 
       {/* Introduction Section */}
