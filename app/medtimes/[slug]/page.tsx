@@ -3,6 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { GlobalBackground } from "@/components/global-Background"
+import { ArticleBody } from "@/components/article-body"
 
 
 // Cache this page for 60 seconds, then revalidate in background
@@ -12,7 +13,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const supabase = await createClient()
   const { data: article } = await supabase
     .from("articles")
-    .select("title, excerpt, featured_image")
+    .select("title, excerpt, featured_image, seo_title, seo_description, og_image")
     .eq("slug", params.slug)
     .eq("status", "published")
     .single()
@@ -23,13 +24,17 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     }
   }
 
+  const title = article.seo_title || article.title
+  const description = article.seo_description || article.excerpt || "Read this article on MEDTimes"
+  const image = article.og_image || article.featured_image
+
   return {
-    title: `${article.title} | MEDTimes`,
-    description: article.excerpt || "Read this article on MEDTimes",
+    title: `${title} | MEDTimes`,
+    description,
     openGraph: {
-      title: article.title,
-      description: article.excerpt,
-      images: article.featured_image ? [article.featured_image] : [],
+      title,
+      description,
+      images: image ? [image] : [],
     },
   }
 }
@@ -157,10 +162,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             </p>
           </div>
         ) : (
-          <div
-            className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-[#193fa6] prose-img:rounded-lg prose-img:shadow-lg"
-            dangerouslySetInnerHTML={{ __html: article.content }}
-          />
+          <ArticleBody content={article.content} />
         )}
       </article>
 

@@ -34,7 +34,7 @@ export function GlobalBackground() {
         {/* Rotaract Logo */}
         <div className="mb-12 animate-fade-in">
               {/* <img 
-                src="/images/Blue.png" 
+                src="/images/blue.png" 
                 alt="Mediterranean Rotaract" 
                 className="h-64 w-auto brightness-0 invert -my-10"
               /> */}

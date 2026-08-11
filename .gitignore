@@ -37,3 +37,8 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# Contains a live API key - never commit
+future-plan/api.md
+scripts/sequence/plates/
+scripts/sequence/_dive.html

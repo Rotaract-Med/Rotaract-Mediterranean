@@ -77,6 +77,31 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Lenis (home page) drives its own smooth scroll — native smooth-scroll would
+   fight it on anchor jumps, so it's turned off only while Lenis is mounted. */
+html.lenis {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+/* Home page "One Sea" palette — extends the existing brand blue (#193fa6) and
+   gold (#D4AF37) downward for depth. Only --sea-abyss and --foam are new
+   values; everything else is a value already used elsewhere in the app. */
+:root {
+  --sea-surface: #193fa6;
+  --sea-deep: #0d2d6e;
+  --sea-abyss: #08163d;
+  --foam: #f4f7fd;
+  --gold: #d4af37;
+  --gold-bright: #ffd700;
+  --med-love: #e91e63;
+  --med-nature: #10b981;
+  --med-culture: #38bdf8;
+}
+
 /* Custom animations */
 @keyframes fadeInUp {
   from {

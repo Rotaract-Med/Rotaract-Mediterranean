@@ -1,0 +1,83 @@
+// The vendor styles in components/tiptap-templates/simple/simple-editor.scss
+// are written for a full-viewport standalone page: .simple-editor-content
+// centers a fixed 648px reading column with `margin: 0 auto`, which reads
+// fine when the editor owns the whole page, but leaves a large empty gap
+// once it's embedded in a bordered card with a palette sidebar next to it.
+// This overrides just that sizing, scoped to this embedded usage only, so
+// the vendor file itself stays untouched (re-running the Tiptap CLI won't
+// clobber this).
+.embedded {
+  :global(.simple-editor-content) {
+    max-width: none;
+    margin: 0;
+  }
+
+  :global(.simple-editor-content .tiptap.ProseMirror.simple-editor) {
+    padding: 1.25rem 1.5rem 8rem;
+  }
+
+  // Base code block chrome (background/padding) for the editor only - the
+  // published page gets equivalent styling for free from Tailwind
+  // Typography's `prose` class. Token colors (.hljs-*) are shared - see
+  // styles/tiptap-content.css.
+  :global(.tiptap.ProseMirror pre) {
+    background: #1d1e20;
+    color: #f4f4f5;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+  }
+
+  :global(.tiptap.ProseMirror pre code) {
+    background: none;
+    color: inherit;
+    font-size: 0.85em;
+  }
+
+  // Image resize handles (Image.configure({ resize: {...} }) in
+  // article-editor.tsx). @tiptap/core's ResizableNodeView renders the
+  // functional drag zones as bare divs with no default size or visual
+  // styling at all - without this they exist and work, but are literally
+  // invisible and effectively undiscoverable. Editor-only: the published
+  // page just shows a plain sized <img>, no resize UI needed there.
+  :global([data-resize-wrapper]) {
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  :global([data-resize-handle]) {
+    opacity: 0;
+    z-index: 10;
+    transition: opacity 0.15s ease;
+  }
+
+  :global([data-resize-wrapper]:hover [data-resize-handle]),
+  :global([data-resize-handle][data-resize-state="resizing"]) {
+    opacity: 1;
+  }
+
+  :global([data-resize-handle="left"]),
+  :global([data-resize-handle="right"]) {
+    width: 6px;
+    margin: 8px 0;
+    cursor: ew-resize;
+    background: var(--tt-brand-color-500, #193fa6);
+    border-radius: 3px;
+  }
+
+  :global([data-resize-handle="top"]),
+  :global([data-resize-handle="bottom"]) {
+    height: 6px;
+    margin: 0 8px;
+    cursor: ns-resize;
+    background: var(--tt-brand-color-500, #193fa6);
+    border-radius: 3px;
+  }
+}
+
+// Focus mode: dims every top-level block except the one the Focus extension
+// has marked with .has-focus. Off by default - toggled via FocusModeButton.
+.focusMode :global(.tiptap.ProseMirror > *:not(.has-focus)) {
+  opacity: 0.35;
+  transition: opacity 0.15s ease;
+}

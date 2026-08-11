@@ -9,7 +9,7 @@ export function Footer() {
           <div className="md:col-span-1">
             <div className="mb-4">
               <img 
-                src="/images/Blue.png" 
+                src="/images/blue.png" 
                 alt="Mediterranean Rotaract" 
                 className="h-48 w-auto brightness-0 invert -my-20"
               />

@@ -59,7 +59,7 @@ Hybrid approach: legacy base64 in `media_library` table, modern S3/MinIO via `li
 - `lib/permissions.ts` — RBAC permission definitions
 - `lib/server.ts` / `lib/client.ts` — Supabase client factories
 - `lib/s3.ts` — S3/MinIO utilities
-- `components/rich-text-editor.tsx` — WYSIWYG editor (contentEditable + execCommand, outputs raw HTML)
+- `components/rich-text-editor.tsx` — re-exports `ArticleEditor` (`components/editor/article-editor.tsx`), the article WYSIWYG editor. Built on Tiptap's official "Simple Editor" UI kit (`components/tiptap-*`, scaffolded via `npx @tiptap/cli add simple-editor`, MIT-licensed, editable source not an npm package) plus a hand-wired block drag-handle, slash command menu, and table button in `components/editor/`. Outputs HTML, sanitized on render via `lib/sanitize.ts` / `components/article-body.tsx` rather than trusted as-is. See `.github/copilot-instructions.md` for the full breakdown.
 - `components/canvas-page-builder.tsx` — Drag-and-drop visual editor for awards pages
 - `components/media-selector.tsx` — Media library picker used across forms
 
