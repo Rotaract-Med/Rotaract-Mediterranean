@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/server"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Upload, ImageIcon, FileText } from "lucide-react"
 import { MediaUploadDialog } from "@/components/media-upload-dialog"
 import { DirectS3UploadDialog } from "@/components/direct-s3-upload-dialog"
-import { MediaCard } from "@/components/media-card"
+import { BulkMediaUploadDialog } from "@/components/bulk-media-upload-dialog"
+import { MediaLibraryGrid } from "@/components/media-library-grid"
 import { GuidelinesInfoDialog } from "@/components/guidelines-info-dialog"
 import { redirect } from "next/navigation"
 import { hasPermission } from "@/lib/permissions"
@@ -33,6 +33,7 @@ export default async function MediaPage() {
   const documentFiles = mediaFiles?.filter((file) => !file.file_type.startsWith("image/")) || []
 
   const canUpload = hasPermission(profile?.role, "media", "create")
+  const canDelete = hasPermission(profile?.role, "media", "delete")
 
   return (
     <div className="space-y-6">
@@ -46,6 +47,7 @@ export default async function MediaPage() {
             <div className="flex gap-2">
               <MediaUploadDialog />
               <DirectS3UploadDialog />
+              <BulkMediaUploadDialog />
             </div>
             <GuidelinesInfoDialog />
           </div>
@@ -103,49 +105,7 @@ export default async function MediaPage() {
         </Card>
       </div>
 
-      {/* Images Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Images</h2>
-          <Badge variant="secondary">{imageFiles.length} files</Badge>
-        </div>
-        {imageFiles.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            {imageFiles.map((file) => (
-              <MediaCard key={file.id} file={file} />
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <ImageIcon className="h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-500">No images uploaded yet</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Documents Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Documents</h2>
-          <Badge variant="secondary">{documentFiles.length} files</Badge>
-        </div>
-        {documentFiles.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {documentFiles.map((file) => (
-              <MediaCard key={file.id} file={file} />
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-500">No documents uploaded yet</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      <MediaLibraryGrid imageFiles={imageFiles} documentFiles={documentFiles} canDelete={canDelete} />
     </div>
   )
 }

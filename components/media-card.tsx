@@ -26,13 +26,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Copy, Edit, Trash2, FileText, Check } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface MediaCardProps {
   file: any
+  selectable?: boolean
+  selected?: boolean
+  onToggleSelect?: (id: string) => void
 }
 
-export function MediaCard({ file }: MediaCardProps) {
+export function MediaCard({ file, selectable, selected, onToggleSelect }: MediaCardProps) {
   const router = useRouter()
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -100,7 +105,14 @@ export function MediaCard({ file }: MediaCardProps) {
   }
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card
+      className={cn(
+        "overflow-hidden hover:shadow-lg transition-shadow",
+        selectable && "cursor-pointer",
+        selected && "ring-2 ring-[#193fa6]"
+      )}
+      onClick={selectable ? () => onToggleSelect?.(file.id) : undefined}
+    >
       <CardContent className="p-0">
         {isImage ? (
           <div className="aspect-video bg-gray-100 relative">
@@ -112,6 +124,11 @@ export function MediaCard({ file }: MediaCardProps) {
                 e.currentTarget.src = "/placeholder.svg"
               }}
             />
+            {selectable && (
+              <div className="absolute top-2 left-2 bg-white/90 rounded p-0.5">
+                <Checkbox checked={!!selected} className="pointer-events-none" />
+              </div>
+            )}
           </div>
         ) : isVideo ? (
           <div className="aspect-video bg-black relative">
@@ -122,10 +139,20 @@ export function MediaCard({ file }: MediaCardProps) {
             >
               Your browser does not support the video tag.
             </video>
+            {selectable && (
+              <div className="absolute top-2 left-2 bg-white/90 rounded p-0.5">
+                <Checkbox checked={!!selected} className="pointer-events-none" />
+              </div>
+            )}
           </div>
         ) : (
-          <div className="aspect-video bg-gray-100 flex items-center justify-center">
+          <div className="aspect-video bg-gray-100 flex items-center justify-center relative">
             <FileText className="h-12 w-12 text-gray-400" />
+            {selectable && (
+              <div className="absolute top-2 left-2 bg-white/90 rounded p-0.5">
+                <Checkbox checked={!!selected} className="pointer-events-none" />
+              </div>
+            )}
           </div>
         )}
         <div className="p-4 space-y-3">
@@ -140,6 +167,7 @@ export function MediaCard({ file }: MediaCardProps) {
               })}
             </p>
           </div>
+          {!selectable && (
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleCopyUrl} className="flex-1 bg-transparent">
               {isCopied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
@@ -212,6 +240,7 @@ export function MediaCard({ file }: MediaCardProps) {
               </AlertDialogContent>
             </AlertDialog>
           </div>
+          )}
         </div>
       </CardContent>
     </Card>
