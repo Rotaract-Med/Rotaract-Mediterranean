@@ -317,6 +317,425 @@ html {
   }
 }
 
+/* ============================================================
+   Interactive Booklet — hardcover yearbook treatment
+   Structure: .book-scene (perspective) > .book (tilt + contact shadow)
+     > .book-cover (navy board) > .booklet-stage (the two pages + leaf)
+   The flip mechanics (two-stage rotation, mirror-compensated leaf) are
+   unchanged from before — everything here is the chrome around it.
+   ============================================================ */
+
+.book-scene {
+  --cover-1: #0b1733;
+  --cover-2: #16295c;
+  --cover-3: #091026;
+  --gold-1: #e3c765;
+  --gold-2: #c9a227;
+  --gold-3: #8d6f1c;
+  --paper: #fdfcfa;
+  --ink-soft: #8a8371;
+
+  --page-w: clamp(112px, 42vw, 400px);
+  --page-pad: clamp(16px, 4vw, 38px);
+  --card-ratio: 1.25; /* source cards are 1080x1350 = 4:5 */
+  --page-h: calc(var(--page-pad) * 2 + (var(--page-w) - var(--page-pad) * 2) * var(--card-ratio));
+  --board: clamp(8px, 1.6vw, 15px);
+  --spine-w: clamp(12px, 2.2vw, 22px);
+
+  position: relative;
+  perspective: 2600px;
+  perspective-origin: 50% 38%;
+  padding: 0 clamp(20px, 6vw, 52px) 40px;
+}
+
+.book {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(4.5deg);
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.book:hover {
+  transform: rotateX(2.5deg);
+}
+.book::after {
+  content: "";
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: -22px;
+  height: 36px;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(12, 20, 45, 0.4), rgba(12, 20, 45, 0) 72%);
+  filter: blur(14px);
+  z-index: -2;
+}
+@media (max-width: 640px) {
+  .book,
+  .book:hover {
+    transform: none;
+  }
+}
+
+.book-cover {
+  position: relative;
+  padding: var(--board);
+  border-radius: 5px 16px 16px 5px;
+  background: linear-gradient(158deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0) 38%),
+    linear-gradient(180deg, var(--cover-2) 0%, var(--cover-1) 55%, var(--cover-3) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 5px rgba(8, 14, 35, 0.35),
+    0 26px 50px -18px rgba(8, 14, 35, 0.55), 0 50px 80px -40px rgba(8, 14, 35, 0.5);
+}
+.book-cover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.045) 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay;
+}
+.book-cover::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 3px 12px 12px 3px;
+  pointer-events: none;
+  border: 1px solid rgba(201, 162, 39, 0.42);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(227, 199, 101, 0.16);
+}
+
+.booklet-stage {
+  position: relative;
+  display: flex;
+  width: calc(var(--page-w) * 2);
+  height: var(--page-h);
+  border-radius: 2px;
+  /* A fresh, local 3D context for the flip specifically — short chain
+     (stage -> leaf), so nothing between them can flatten it. See the
+     .booklet-leaf comment below for why this has to be self-contained. */
+  perspective: 2200px;
+}
+
+/* -- page thickness at the fore-edge -- */
+.edge-stack {
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  width: 12px;
+  pointer-events: none;
+  z-index: 4;
+}
+.edge-stack.l {
+  left: -12px;
+}
+.edge-stack.r {
+  right: -12px;
+}
+.edge-stack i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 1px;
+  display: block;
+  background: linear-gradient(180deg, #efe6cd, #cdb887 18%, #a98f55 52%, #cdb887 84%, #efe6cd);
+}
+.edge-stack.l i {
+  right: 0;
+}
+.edge-stack.r i {
+  left: 0;
+}
+.edge-stack i:nth-child(1) {
+  transform: translateX(0) scaleY(1);
+  opacity: 1;
+}
+.edge-stack i:nth-child(2) {
+  transform: translateX(-3px) scaleY(0.988);
+  opacity: 0.86;
+}
+.edge-stack.r i:nth-child(2) {
+  transform: translateX(3px) scaleY(0.988);
+}
+.edge-stack i:nth-child(3) {
+  transform: translateX(-6px) scaleY(0.974);
+  opacity: 0.64;
+}
+.edge-stack.r i:nth-child(3) {
+  transform: translateX(6px) scaleY(0.974);
+}
+.edge-stack i:nth-child(4) {
+  transform: translateX(-9px) scaleY(0.958);
+  opacity: 0.42;
+}
+.edge-stack.r i:nth-child(4) {
+  transform: translateX(9px) scaleY(0.958);
+}
+
+/* -- a single page -- */
+.book-page {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  background: var(--paper);
+  overflow: hidden;
+}
+.book-page.curve-l {
+  transform-origin: right center;
+  transform: rotateY(1.6deg);
+  border-radius: 1px 0 0 1px;
+}
+.book-page.curve-r {
+  transform-origin: left center;
+  transform: rotateY(-1.6deg);
+  border-radius: 0 1px 1px 0;
+}
+.book-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='.055'/></svg>");
+}
+
+/* -- the spine valley -- */
+.spine {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: var(--spine-w);
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+}
+.spine::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(10, 8, 4, 0) 0%,
+    rgba(28, 22, 12, 0.3) 26%,
+    rgba(8, 6, 3, 0.72) 50%,
+    rgba(28, 22, 12, 0.3) 74%,
+    rgba(10, 8, 4, 0) 100%
+  );
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 5%, #000 95%, transparent);
+}
+.spine::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 2%;
+  bottom: 2%;
+  width: 1px;
+  transform: translateX(-0.5px);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* -- headbands: the woven caps at head & foot of the spine -- */
+.headband {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 34px;
+  height: 7px;
+  z-index: 6;
+  border-radius: 3px;
+  background: repeating-linear-gradient(90deg, var(--gold-2) 0 2px, #6d3030 2px 4px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.headband.top {
+  top: -3px;
+}
+.headband.bot {
+  bottom: -3px;
+}
+
+/* -- page furniture: running head + folio -- */
+.running-head {
+  position: absolute;
+  top: 12px;
+  left: var(--page-pad);
+  right: var(--page-pad);
+  text-align: center;
+  z-index: 2;
+}
+.running-head span {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 600 8.5px system-ui;
+  letter-spacing: 0.22em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+.running-head hr {
+  border: 0;
+  border-top: 1px solid rgba(20, 16, 10, 0.09);
+  margin-top: 6px;
+}
+.folio {
+  position: absolute;
+  bottom: 10px;
+  z-index: 2;
+  font: 500 11px Georgia, "Times New Roman", serif;
+  color: var(--ink-soft);
+  letter-spacing: 0.1em;
+}
+.book-page.curve-l .folio {
+  left: var(--page-pad);
+}
+.book-page.curve-r .folio {
+  right: var(--page-pad);
+}
+
+/* -- the card, mounted like a yearbook photo -- */
+.mount {
+  position: absolute;
+  left: calc(var(--page-pad) + 6px);
+  right: calc(var(--page-pad) + 6px);
+  top: clamp(26px, 8vw, 36px);
+  bottom: clamp(22px, 6.5vw, 30px);
+  z-index: 2;
+}
+.mount .card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(20, 16, 10, 0.13), 0 1px 2px rgba(20, 16, 10, 0.16),
+    0 6px 14px -6px rgba(20, 16, 10, 0.3);
+}
+.mount i {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  z-index: 3;
+  background: linear-gradient(135deg, rgba(48, 40, 26, 0.34), rgba(48, 40, 26, 0.14));
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.14);
+}
+.mount i.tl {
+  top: -3px;
+  left: -3px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+.mount i.tr {
+  top: -3px;
+  right: -3px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+.mount i.bl {
+  bottom: -3px;
+  left: -3px;
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+}
+.mount i.br {
+  bottom: -3px;
+  right: -3px;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+/* -- cast shadow swept by the turning leaf — lives INSIDE each face, not on
+   the rotating element (z-index doesn't sort predictably inside a preserve-3d
+   context, and this way each face's shadow just fades with that face). -- */
+.leaf-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0) 55%);
+  opacity: 0;
+  animation: leaf-shade-pulse 0.8s ease-in-out forwards;
+}
+@keyframes leaf-shade-pulse {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* -- flip mechanics — a genuine two-sided leaf, one continuous rotation.
+   Critical constraint: nothing on .booklet-leaf itself (or on .leaf-face)
+   may use filter, opacity < 1, overflow other than visible, mask,
+   clip-path, or a non-normal mix-blend-mode. Any of those forces the
+   element to render flat (transform-style: flat) REGARDLESS of what
+   transform-style is set to — that's what broke this the last two rounds:
+   filter: brightness() was animated directly on the rotating element,
+   silently flattening it into a 2D sprite for the whole turn. Depth-based
+   darkening now lives on .leaf-shade, a plain child with no transform of
+   its own, where a filter/opacity would be harmless — deliberately not
+   used there either, just a gradient, to keep the whole thing simple.
+   backface-visibility lives on the faces, never on the rotating leaf. -- */
+.booklet-leaf {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.leaf-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+/* Always +180, regardless of turn direction — rotateY(180deg) composed
+   with the parent's own rotation (0 -> -180 or 0 -> +180) always lands
+   back at an effective 0deg by the time the parent finishes, so the back
+   face settles right-side up either way. */
+.leaf-face.leaf-back {
+  transform: rotateY(180deg);
+}
+
+@keyframes leaf-turn-next {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(-180deg);
+  }
+}
+@keyframes leaf-turn-prev {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(180deg);
+  }
+}
+.leaf-turn-next {
+  animation: leaf-turn-next 0.8s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
+  transform-origin: left center;
+}
+.leaf-turn-prev {
+  animation: leaf-turn-prev 0.8s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
+  transform-origin: right center;
+}
+
+/* Only the decorative embellishments (hover tilt, cast shadow) are gated on
+   reduced motion — the turn itself stays, since a contained card-flip like
+   this isn't the kind of large/disorienting motion that preference targets,
+   and gating the turn's own timing here previously caused it to break. */
+@media (prefers-reduced-motion: reduce) {
+  .book,
+  .book:hover {
+    transition: none;
+  }
+  .leaf-shade {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* Flying Birds */
 .bird {
   position: absolute;

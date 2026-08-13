@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { ChevronLeft, ChevronRight, Heart, Leaf, Users } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { PanelCarousel } from "@/components/panel-carousel"
+import { InteractiveBooklet, type BookletCategory } from "@/components/interactive-booklet"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 
@@ -19,14 +18,10 @@ interface HeroSlide {
 
 export function HomePageClient({
   heroSlides,
-  collaboratorImages,
-  countryRepImages,
-  executiveBoardImages
+  bookletCategories,
 }: {
   heroSlides: HeroSlide[],
-  collaboratorImages: string[],
-  countryRepImages: string[],
-  executiveBoardImages: string[]
+  bookletCategories: BookletCategory[]
 }) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
@@ -258,40 +253,20 @@ export function HomePageClient({
         </div>
       </section>
 
-      {/* Three Panels */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "Collaborators",
-                images: collaboratorImages,
-                description: "Our valued partners and collaborators",
-                imagePosition: "top-center" as const,
-              },
-              {
-                title: "Executive Board",
-                images: executiveBoardImages,
-                description: "Learn about our leadership team",
-              },
-              {
-                title: "Country Representatives",
-                images: countryRepImages,
-                description: "Meet our dedicated country representatives",
-                imagePosition: "top-center" as const,
-              },
-            ].map((panel, index) => (
-              <PanelCarousel
-                key={index}
-                title={panel.title}
-                images={panel.images}
-                description={panel.description}
-                imagePosition={panel.imagePosition}
-              />
-            ))}
+      {/* Meet Our People — Interactive Booklet */}
+      {bookletCategories.some((category) => category.people.length > 0) && (
+        <section className="py-20 bg-gray-50" id="meet-our-people">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-14">
+              <h2 className="text-4xl md:text-5xl font-bold text-[#193fa6] mb-4">Meet Our People</h2>
+              <p className="text-sm md:text-lg text-gray-700 max-w-2xl mx-auto">
+                Pick a category and flip through the pages to meet the people behind Rotaract Mediterranean.
+              </p>
+            </div>
+            <InteractiveBooklet categories={bookletCategories} />
           </div>
-        </div>
-      </section>
+        </section>
+      )}
       {/* Connect & Share */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">

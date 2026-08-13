@@ -11,9 +11,9 @@ export default async function RotaractMediterranean() {
   }
   let heroSlides = null
   let collaboratorImages = null
-  let countryRepImages = null
-  let executiveBoardImages = null
-  
+  let countryReps = null
+  let executiveBoard = null
+
   try {
     const supabase = await createClient()
     const result = await supabase
@@ -30,21 +30,23 @@ export default async function RotaractMediterranean() {
       .order("display_order", { ascending: true })
     collaboratorImages = collaboratorsResult.data
 
-    // Fetch country representatives avatars
+    // Fetch country representatives
     const countryRepsResult = await supabase
       .from("team_members")
-      .select("avatar_url")
+      .select("id, full_name, position, country, avatar_url")
       .eq("section", "country_representatives")
       .not("avatar_url", "is", null)
-    countryRepImages = countryRepsResult.data
+      .order("display_order", { ascending: true })
+    countryReps = countryRepsResult.data
 
-    // Fetch executive board avatars
+    // Fetch executive board
     const executiveBoardResult = await supabase
       .from("team_members")
-      .select("avatar_url")
+      .select("id, full_name, position, country, avatar_url")
       .eq("section", "executive_board")
       .not("avatar_url", "is", null)
-    executiveBoardImages = executiveBoardResult.data
+      .order("display_order", { ascending: true })
+    executiveBoard = executiveBoardResult.data
   } catch (error) {
     console.error("Failed to fetch data:", error)
     // Will use default slides
@@ -81,37 +83,50 @@ export default async function RotaractMediterranean() {
         }))
       : defaultSlides
 
-  const collaborators = collaboratorImages && collaboratorImages.length > 0
-    ? collaboratorImages.map((img: any) => img.image_url)
-    : [
-        "/placeholder.svg?height=300&width=400&text=Collaborator+1",
-        "/placeholder.svg?height=300&width=400&text=Collaborator+2",
-        "/placeholder.svg?height=300&width=400&text=Collaborator+3",
-        "/placeholder.svg?height=300&width=400&text=Collaborator+4",
-      ]
+  // Only real entries with an image are included — a category with none
+  // is simply omitted from the booklet by HomePageClient.
+  const bookletCategories = [
+    {
+      key: "executive_board",
+      label: "Executive Board",
+      people: (executiveBoard || [])
+        .filter((member: any) => member.avatar_url)
+        .map((member: any) => ({
+          id: member.id,
+          image: member.avatar_url,
+          name: member.full_name,
+          role: member.position,
+          meta: member.country,
+        })),
+    },
+    {
+      key: "country_representatives",
+      label: "Country Representatives",
+      people: (countryReps || [])
+        .filter((member: any) => member.avatar_url)
+        .map((member: any) => ({
+          id: member.id,
+          image: member.avatar_url,
+          name: member.full_name,
+          role: member.position,
+          meta: member.country,
+        })),
+    },
+    {
+      key: "collaborators",
+      label: "Collaborators",
+      people: (collaboratorImages || [])
+        .filter((img: any) => img.image_url)
+        .map((img: any) => ({
+          id: img.id,
+          image: img.image_url,
+          name: img.alt_text || undefined,
+        })),
+    },
+  ]
 
-  const countryReps = countryRepImages && countryRepImages.length > 0
-    ? countryRepImages.map((member: any) => member.avatar_url)
-    : [
-        "/placeholder.svg?height=300&width=400&text=Representative+Meeting",
-        "/placeholder.svg?height=300&width=400&text=Leadership+Team",
-        "/placeholder.svg?height=300&width=400&text=Conference+2024",
-        "/placeholder.svg?height=300&width=400&text=Youth+Leaders",
-      ]
-
-  const executiveBoard = executiveBoardImages && executiveBoardImages.length > 0
-    ? executiveBoardImages.map((member: any) => member.avatar_url)
-    : [
-        "/placeholder.svg?height=300&width=400&text=Board+Meeting",
-        "/placeholder.svg?height=300&width=400&text=Strategic+Planning",
-        "/placeholder.svg?height=300&width=400&text=Annual+Assembly",
-        "/placeholder.svg?height=300&width=400&text=Leadership+Summit",
-      ]
-
-  return <HomePageClient 
-    heroSlides={slides} 
-    collaboratorImages={collaborators}
-    countryRepImages={countryReps}
-    executiveBoardImages={executiveBoard}
+  return <HomePageClient
+    heroSlides={slides}
+    bookletCategories={bookletCategories}
   />
 }

@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(break)",
+      "Bash(SCRATCH=\"/c/Users/karam/AppData/Local/Temp/claude/k--mdio-mdiomed/0b30abeb-e5eb-4c96-923b-9701dba2837d/scratchpad\" *)",
+      "Bash(echo \"EXIT:$?\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\karam\\AppData\\Local\\Temp\\claude\\k--mdio-mdiomed\\0b30abeb-e5eb-4c96-923b-9701dba2837d\\scratchpad"
     ]
   }
 }
