@@ -1,10 +1,17 @@
 import { createClient } from "@/lib/server"
 import { ArticleForm } from "@/components/article-form"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
+import { hasPermission } from "@/lib/permissions"
 
 export default async function EditArticlePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user?.id).single()
 
   // Fetch article - this is OK to include content since it's a single article
   const { data: article, error } = await supabase.from("articles").select("*").eq("id", id).single()
@@ -12,6 +19,12 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
   if (error || !article) {
     console.error("Error loading article:", error)
     notFound()
+  }
+
+  const canEdit = hasPermission(profile?.role, "articles", "edit")
+
+  if (!canEdit) {
+    redirect("/dashboard/articles")
   }
 
   return (

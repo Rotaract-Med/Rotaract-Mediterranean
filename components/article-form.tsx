@@ -241,10 +241,23 @@ export function ArticleForm({ article }: ArticleFormProps) {
     const timer = setTimeout(async () => {
       setSaveStatus("saving")
       const supabase = createClient()
-      const { error: saveError } = await supabase.from("articles").update(changed).eq("id", article.id)
+      const { data: savedRows, error: saveError } = await supabase
+        .from("articles")
+        .update(changed)
+        .eq("id", article.id)
+        .select("id")
       if (saveError) {
         setSaveStatus("error")
         toast({ title: "Autosave failed", description: saveError.message, variant: "destructive" })
+        return
+      }
+      if (!savedRows || savedRows.length === 0) {
+        setSaveStatus("error")
+        toast({
+          title: "Autosave failed",
+          description: "You don't have permission to edit this article.",
+          variant: "destructive",
+        })
         return
       }
       setInitialValues((prev) => ({ ...prev, ...changed }))
@@ -300,8 +313,15 @@ export function ArticleForm({ article }: ArticleFormProps) {
         const changedFields = computeChangedFields(statusOverride)
 
         if (Object.keys(changedFields).length > 0) {
-          const { error } = await supabase.from("articles").update(changedFields).eq("id", article.id)
+          const { data: savedRows, error } = await supabase
+            .from("articles")
+            .update(changedFields)
+            .eq("id", article.id)
+            .select("id")
           if (error) throw error
+          if (!savedRows || savedRows.length === 0) {
+            throw new Error("You don't have permission to edit this article.")
+          }
           await revalidateArticle(formData.slug)
         }
       } else {

@@ -30,6 +30,8 @@ export default async function ArticlesPage() {
     .order("created_at", { ascending: false })
 
   const canCreate = hasPermission(profile?.role, "articles", "create")
+  const canEdit = hasPermission(profile?.role, "articles", "edit")
+  const canDelete = hasPermission(profile?.role, "articles", "delete")
 
   return (
     <div className="space-y-6">
@@ -94,14 +96,14 @@ export default async function ArticlesPage() {
                         </Button>
                       </Link>
                     )}
-                    <Link href={`/dashboard/articles/${article.id}/edit`}>
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    {(profile?.role === "admin" || article.author_id === user?.id) && (
-                      <DeleteArticleButton articleId={article.id} />
+                    {canEdit && (
+                      <Link href={`/dashboard/articles/${article.id}/edit`}>
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </Link>
                     )}
+                    {canDelete && <DeleteArticleButton articleId={article.id} />}
                   </div>
                 </div>
               </CardHeader>
