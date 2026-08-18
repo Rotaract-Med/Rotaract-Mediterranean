@@ -355,7 +355,7 @@ export function AwardsPageClient({ settings }: AwardsPageClientProps) {
           <div className="">
             <div className=" ">
               <img
-                src="/images/Blue.png"
+                src="/images/blue.png"
                 alt="Rotaract Mediterranean"
                 className="h-20 sm:h-28 md:h-36 brightness-0 invert"
               />

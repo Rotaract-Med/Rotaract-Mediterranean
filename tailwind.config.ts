@@ -49,7 +49,28 @@ const config: Config = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+  			// Home-page "One Sea" palette — extends the existing brand blue/gold
+  			// downward for depth. See lib/story.ts and components/home/*.
+  			sea: {
+  				surface: 'var(--sea-surface)',
+  				deep: 'var(--sea-deep)',
+  				abyss: 'var(--sea-abyss)'
+  			},
+  			foam: 'var(--foam)',
+  			gold: {
+  				DEFAULT: 'var(--gold)',
+  				bright: 'var(--gold-bright)'
+  			},
+  			medlove: 'var(--med-love)',
+  			mednature: 'var(--med-nature)',
+  			medculture: 'var(--med-culture)'
+  		},
+  		fontFamily: {
+  			// Home-page-only display/data faces. Keep distinct from Tailwind's
+  			// default `font-sans` / `font-mono` so other pages are unaffected.
+  			display: ['var(--font-archivo)', 'ui-sans-serif', 'sans-serif'],
+  			data: ['var(--font-space-mono)', 'ui-monospace', 'monospace']
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -58,6 +79,6 @@ const config: Config = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 };
 export default config;

@@ -41,14 +41,73 @@ export interface PDFContent {
   title: string
   excerpt: string
   htmlContent: string
-  pageImages: string[] // Base64-encoded images of each PDF page
+  pageImages: string[] // Hosted S3 URLs of each rendered PDF page
+}
+
+function canvasToFile(canvas: HTMLCanvasElement, name: string): Promise<File> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error("Failed to encode PDF page as an image"))
+          return
+        }
+        resolve(new File([blob], name, { type: "image/png" }))
+      },
+      "image/png",
+      0.95,
+    )
+  })
+}
+
+// Uploads a rendered PDF page straight to S3 via the presigned-URL endpoint
+// and nothing else - deliberately skipping components/editor/image-upload.ts's
+// uploadEditorImage(), which additionally records an entry in media_library.
+// These page renders are a mechanical by-product of importing a PDF, not
+// something an author is choosing to add to the shared media library, and
+// media_team browses that table directly - one row per page (times however
+// many times a journalist re-imports while getting the article right) would
+// clutter their view with images nobody meant to curate. Skipping the DB
+// record just means the file only lives at its S3 URL; the URL is stable
+// either way, which is all the article content needs.
+async function uploadPdfPageImage(file: File): Promise<string> {
+  const presignResponse = await fetch("/api/upload/presigned", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fileName: file.name, fileType: file.type }),
+  })
+
+  if (!presignResponse.ok) {
+    const errorData = await presignResponse.json()
+    throw new Error(errorData.error || "Failed to get upload URL for PDF page")
+  }
+
+  const { presignedUrl, publicUrl } = await presignResponse.json()
+
+  const putResponse = await fetch(presignedUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  })
+
+  if (!putResponse.ok) {
+    throw new Error(`Failed to upload PDF page image (status ${putResponse.status})`)
+  }
+
+  return publicUrl
 }
 
 /**
  * Extract full PDF content including layout, images, colors, and formatting
- * Renders each page as a high-quality image to preserve visual fidelity
+ * Renders each page as a high-quality image to preserve visual fidelity.
+ *
+ * Each rendered page is uploaded to S3 (same path as any other editor image,
+ * see components/editor/image-upload.ts) rather than inlined as a base64
+ * data URI - a multi-page PDF at 2x render scale can easily produce tens of
+ * MB of inline base64, which blows past localStorage's draft-snapshot quota
+ * and Supabase's request size limits, making saves fail silently.
  */
-export async function parsePDF(file: File): Promise<PDFContent> {
+export async function parsePDF(file: File, onPageProgress?: (page: number, total: number) => void): Promise<PDFContent> {
   try {
     // Get pdfjs library (client-side only)
     const pdfjs = await loadPdfJs()
@@ -85,9 +144,12 @@ export async function parsePDF(file: File): Promise<PDFContent> {
         canvas: canvas,
       }).promise
 
-      // Convert canvas to base64 image
-      const imageDataUrl = canvas.toDataURL("image/png", 0.95)
-      pageImages.push(imageDataUrl)
+      // Upload the rendered page and use its hosted URL, rather than
+      // embedding the (often multi-MB) image inline as base64
+      const pageFile = await canvasToFile(canvas, `${file.name.replace(/\.pdf$/i, "")}-page-${pageNum}.png`)
+      const pageUrl = await uploadPdfPageImage(pageFile)
+      pageImages.push(pageUrl)
+      onPageProgress?.(pageNum, pdf.numPages)
 
       // Also extract text for searchability and metadata
       const textContent = await page.getTextContent()
@@ -127,9 +189,12 @@ export async function parsePDF(file: File): Promise<PDFContent> {
     for (let i = 0; i < pageImages.length; i++) {
       htmlParts.push(`<img src="${pageImages[i]}" alt="Page ${i + 1}" style="width: 100%; max-width: 800px; height: auto; display: block; margin: 20px auto;" />`)
       
-      // Add page separator for multi-page documents
+      // Add page separator for multi-page documents. Uses <hr> (a real node
+      // in the editor's schema) rather than a bare styled <div>, which isn't
+      // a recognized node type and gets silently dropped when parsed into
+      // the editor - not what we want for a visible page divider.
       if (i < pageImages.length - 1) {
-        htmlParts.push(`<div style="page-break-after: always; margin: 30px 0; border-top: 2px solid #e5e7eb;"></div>`)
+        htmlParts.push(`<hr />`)
       }
     }
 

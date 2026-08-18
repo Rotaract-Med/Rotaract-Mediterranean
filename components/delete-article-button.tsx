@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Trash2 } from "lucide-react"
 import { revalidateAllArticles } from "@/app/actions/revalidate"
+import { toast } from "@/hooks/use-toast"
 
 export function DeleteArticleButton({ articleId }: { articleId: string }) {
   const router = useRouter()
@@ -27,15 +28,23 @@ export function DeleteArticleButton({ articleId }: { articleId: string }) {
     const supabase = createClient()
 
     try {
-      const { error } = await supabase.from("articles").delete().eq("id", articleId)
+      const { data: deletedRows, error } = await supabase.from("articles").delete().eq("id", articleId).select("id")
       if (error) throw error
-      
+      if (!deletedRows || deletedRows.length === 0) {
+        throw new Error("You don't have permission to delete this article.")
+      }
+
       // Revalidate all article pages
       await revalidateAllArticles()
-      
+
       router.refresh()
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error deleting article:", err)
+      toast({
+        title: "Failed to delete article",
+        description: err.message || "Something went wrong.",
+        variant: "destructive",
+      })
     } finally {
       setIsDeleting(false)
     }

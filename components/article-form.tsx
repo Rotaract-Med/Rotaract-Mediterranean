@@ -2,8 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,16 +12,35 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Save, Eye, FileUp, FileText, Upload, ImageIcon } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Save, Send, FileUp, FileText, Upload, ImageIcon, Eye, ChevronDown, ChevronUp } from "lucide-react"
 import { RichTextEditor } from "./rich-text-editor"
 import { MediaSelector } from "./media-selector"
 import { PDFUpload } from "./pdf-upload"
 import { PDFS3Upload } from "./pdf-s3-upload"
 import type { PDFContent } from "@/lib/pdf-parser"
 import { revalidateArticle } from "@/app/actions/revalidate"
+import { toast } from "@/hooks/use-toast"
+import type { SaveStatus } from "./editor/editor-status-bar"
 
 interface ArticleFormProps {
   article?: any
+}
+
+const DRAFT_STORAGE_KEY = "mdiomed:new-article-draft"
+const AUTOSAVE_DELAY_MS = 2000
+
+function isNewDraftEmpty(data: { title: string; slug: string; excerpt: string; content: string; featured_image: string }) {
+  return !data.title && !data.slug && !data.excerpt && !data.content && !data.featured_image
 }
 
 export function ArticleForm({ article }: ArticleFormProps) {
@@ -36,15 +56,22 @@ export function ArticleForm({ article }: ArticleFormProps) {
     featured_image: article?.featured_image || "",
     category: article?.category || "Culture",
     status: article?.status || "draft",
+    seo_title: article?.seo_title || "",
+    seo_description: article?.seo_description || "",
+    og_image: article?.og_image || "",
   })
   const [showPDFUpload, setShowPDFUpload] = useState(false)
   const [showMediaLibrary, setShowMediaLibrary] = useState(false)
+  const [showSeoFields, setShowSeoFields] = useState(false)
   const [articleType, setArticleType] = useState<'content' | 'pdf'>(article?.article_type || 'content')
   const [pdfUrl, setPdfUrl] = useState(article?.pdf_url || '')
   const [pdfS3Key, setPdfS3Key] = useState(article?.pdf_s3_key || '')
-  
-  // Track initial values to detect changes
-  const [initialValues] = useState({
+
+  // Track baseline values to detect changes. Mutable (unlike the original
+  // single-write version) so a successful autosave can move the baseline
+  // forward - otherwise the "N fields modified" badge and every future
+  // autosave diff would drift out of sync with what's actually saved.
+  const [initialValues, setInitialValues] = useState({
     title: article?.title || "",
     slug: article?.slug || "",
     excerpt: article?.excerpt || "",
@@ -52,23 +79,43 @@ export function ArticleForm({ article }: ArticleFormProps) {
     featured_image: article?.featured_image || "",
     category: article?.category || "Culture",
     status: article?.status || "draft",
+    seo_title: article?.seo_title || "",
+    seo_description: article?.seo_description || "",
+    og_image: article?.og_image || "",
     article_type: article?.article_type || "content",
     pdf_url: article?.pdf_url || "",
     pdf_s3_key: article?.pdf_s3_key || "",
   })
-  
+
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
+  // Draft recovery (new articles only - existing articles are autosaved
+  // straight to Supabase instead, see below).
+  const [recoveryChecked, setRecoveryChecked] = useState(false)
+  const [showRecoveryBanner, setShowRecoveryBanner] = useState(false)
+  const [recoveredSnapshot, setRecoveredSnapshot] = useState<any>(null)
+
   // Check if a field has been modified
   const isFieldModified = (fieldName: keyof typeof formData) => {
     return article && formData[fieldName] !== initialValues[fieldName]
   }
-  
-  // Count total changes
+
+  // Count total changes (mirrors the original scope: form fields only, not
+  // the separate PDF fields tracked below)
   const changedFieldsCount = article
     ? Object.keys(formData).filter((key) => {
         const fieldKey = key as keyof typeof formData
         return formData[fieldKey] !== initialValues[fieldKey]
       }).length
     : 0
+
+  const isDirty = article
+    ? changedFieldsCount > 0 ||
+      articleType !== initialValues.article_type ||
+      pdfUrl !== initialValues.pdf_url
+    : !isNewDraftEmpty(formData) || articleType !== "content" || Boolean(pdfUrl)
 
   const generateSlug = (title: string) => {
     return title
@@ -96,7 +143,159 @@ export function ArticleForm({ article }: ArticleFormProps) {
     setShowPDFUpload(false)
   }
 
-  const handleSubmit = async (e: React.FormEvent, status?: string) => {
+  // Builds the update/insert payload from whatever differs from
+  // `initialValues`. Shared by the explicit Save/Publish buttons and by
+  // autosave so they can never disagree about what "changed" means.
+  const computeChangedFields = (statusOverride?: string) => {
+    const changed: any = {}
+    const currentStatus = statusOverride || formData.status
+
+    Object.keys(formData).forEach((key) => {
+      const fieldKey = key as keyof typeof formData
+      if (fieldKey === "status") return
+      if (formData[fieldKey] !== initialValues[fieldKey]) {
+        changed[key] = formData[fieldKey]
+      }
+    })
+
+    if (articleType !== initialValues.article_type) changed.article_type = articleType
+    if (pdfUrl !== initialValues.pdf_url) changed.pdf_url = pdfUrl || null
+    if (pdfS3Key !== initialValues.pdf_s3_key) changed.pdf_s3_key = pdfS3Key || null
+
+    if (currentStatus !== initialValues.status) {
+      changed.status = currentStatus
+      if (currentStatus === "published" && !article?.published_at) {
+        changed.published_at = new Date().toISOString()
+      }
+    }
+
+    return changed
+  }
+
+  const clearDraftSnapshot = () => {
+    try {
+      localStorage.removeItem(DRAFT_STORAGE_KEY)
+    } catch {
+      // localStorage unavailable (private mode, etc.) - nothing to clean up
+    }
+  }
+
+  // --- Draft recovery: check once on mount for a new article ---
+  useEffect(() => {
+    if (article) {
+      setRecoveryChecked(true)
+      return
+    }
+    try {
+      const raw = localStorage.getItem(DRAFT_STORAGE_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed?.formData && !isNewDraftEmpty(parsed.formData)) {
+          setRecoveredSnapshot(parsed)
+          setShowRecoveryBanner(true)
+        }
+      }
+    } catch {
+      // corrupt snapshot - ignore
+    }
+    setRecoveryChecked(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // --- Persist a snapshot for new articles as the user types ---
+  useEffect(() => {
+    if (article || !recoveryChecked) return
+    if (isNewDraftEmpty(formData) && articleType === "content" && !pdfUrl) {
+      clearDraftSnapshot()
+      return
+    }
+    try {
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ formData, articleType, pdfUrl, pdfS3Key }))
+    } catch {
+      // localStorage unavailable - autosave-to-Supabase doesn't apply pre-save, so just skip
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData, articleType, pdfUrl, pdfS3Key, article, recoveryChecked])
+
+  const handleRestoreDraft = () => {
+    if (!recoveredSnapshot) return
+    setFormData((prev) => ({ ...prev, ...recoveredSnapshot.formData }))
+    setArticleType(recoveredSnapshot.articleType || "content")
+    setPdfUrl(recoveredSnapshot.pdfUrl || "")
+    setPdfS3Key(recoveredSnapshot.pdfS3Key || "")
+    setShowRecoveryBanner(false)
+  }
+
+  const handleDiscardDraft = () => {
+    clearDraftSnapshot()
+    setShowRecoveryBanner(false)
+    setRecoveredSnapshot(null)
+  }
+
+  // --- Autosave for existing articles ---
+  useEffect(() => {
+    if (!article || isLoading) return
+    const changed = computeChangedFields()
+    if (Object.keys(changed).length === 0) return
+
+    const timer = setTimeout(async () => {
+      setSaveStatus("saving")
+      const supabase = createClient()
+      const { data: savedRows, error: saveError } = await supabase
+        .from("articles")
+        .update(changed)
+        .eq("id", article.id)
+        .select("id")
+      if (saveError) {
+        setSaveStatus("error")
+        toast({ title: "Autosave failed", description: saveError.message, variant: "destructive" })
+        return
+      }
+      if (!savedRows || savedRows.length === 0) {
+        setSaveStatus("error")
+        toast({
+          title: "Autosave failed",
+          description: "You don't have permission to edit this article.",
+          variant: "destructive",
+        })
+        return
+      }
+      setInitialValues((prev) => ({ ...prev, ...changed }))
+      setSaveStatus("saved")
+      setLastSavedAt(new Date())
+    }, AUTOSAVE_DELAY_MS)
+
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData, articleType, pdfUrl, pdfS3Key, article, isLoading])
+
+  // --- Warn before closing the tab with unsaved work ---
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault()
+        e.returnValue = ""
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [isDirty])
+
+  const handleCancelClick = () => {
+    if (isDirty) {
+      setShowCancelConfirm(true)
+    } else {
+      router.back()
+    }
+  }
+
+  const confirmDiscardAndLeave = () => {
+    if (!article) clearDraftSnapshot()
+    setShowCancelConfirm(false)
+    router.back()
+  }
+
+  const handleSubmit = async (e: React.FormEvent, statusOverride?: string) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
@@ -110,47 +309,23 @@ export function ArticleForm({ article }: ArticleFormProps) {
 
       if (!user) throw new Error("Not authenticated")
 
-      // Determine which fields have actually changed
-      const changedFields: any = {}
-      const currentStatus = status || formData.status
-      
       if (article) {
-        // Only include fields that have changed
-        Object.keys(formData).forEach((key) => {
-          const fieldKey = key as keyof typeof formData
-          if (formData[fieldKey] !== initialValues[fieldKey]) {
-            changedFields[key] = formData[fieldKey]
-          }
-        })
-        
-        // Check PDF-specific fields
-        if (articleType !== initialValues.article_type) {
-          changedFields.article_type = articleType
-        }
-        if (pdfUrl !== initialValues.pdf_url) {
-          changedFields.pdf_url = pdfUrl || null
-        }
-        if (pdfS3Key !== initialValues.pdf_s3_key) {
-          changedFields.pdf_s3_key = pdfS3Key || null
-        }
-        
-        // Always include status if it changed
-        if (currentStatus !== initialValues.status) {
-          changedFields.status = currentStatus
-        }
-        
-        // Handle published_at for status changes
-        if (currentStatus === "published" && !article?.published_at) {
-          changedFields.published_at = new Date().toISOString()
-        }
-        
-        // Only update if there are changes
+        const changedFields = computeChangedFields(statusOverride)
+
         if (Object.keys(changedFields).length > 0) {
-          const { error } = await supabase.from("articles").update(changedFields).eq("id", article.id)
+          const { data: savedRows, error } = await supabase
+            .from("articles")
+            .update(changedFields)
+            .eq("id", article.id)
+            .select("id")
           if (error) throw error
+          if (!savedRows || savedRows.length === 0) {
+            throw new Error("You don't have permission to edit this article.")
+          }
+          await revalidateArticle(formData.slug)
         }
       } else {
-        // New article - include all fields
+        const currentStatus = statusOverride || formData.status
         const articleData = {
           ...formData,
           article_type: articleType,
@@ -163,17 +338,16 @@ export function ArticleForm({ article }: ArticleFormProps) {
         }
         const { error } = await supabase.from("articles").insert([articleData])
         if (error) throw error
-      }
-
-      // Only revalidate if changes were made
-      if (!article || Object.keys(changedFields).length > 0) {
         await revalidateArticle(formData.slug)
+        clearDraftSnapshot()
       }
 
+      toast({ title: statusOverride === "published" ? "Article published" : "Article saved" })
       router.push("/dashboard/articles")
       router.refresh()
     } catch (err: any) {
       setError(err.message)
+      toast({ title: "Failed to save article", description: err.message, variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -182,6 +356,22 @@ export function ArticleForm({ article }: ArticleFormProps) {
   return (
     <form onSubmit={handleSubmit} className="w-full overflow-x-hidden">
       <div className="space-y-4 sm:space-y-6">
+        {showRecoveryBanner && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p className="text-sm text-amber-800">
+              We found an unsaved draft from a previous session. Restore it?
+            </p>
+            <div className="flex gap-2 shrink-0">
+              <Button type="button" size="sm" variant="outline" onClick={handleDiscardDraft}>
+                Discard
+              </Button>
+              <Button type="button" size="sm" onClick={handleRestoreDraft} className="bg-[#193fa6] hover:bg-[#2563eb]">
+                Restore draft
+              </Button>
+            </div>
+          </div>
+        )}
+
         {article && changedFieldsCount > 0 && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
@@ -189,7 +379,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
             </p>
           </div>
         )}
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Article Details</CardTitle>
@@ -268,8 +458,8 @@ export function ArticleForm({ article }: ArticleFormProps) {
                 </SelectContent>
               </Select>
               <p className="text-xs text-gray-500">
-                {articleType === 'pdf' 
-                  ? 'Upload a PDF that will be displayed as an embedded document' 
+                {articleType === 'pdf'
+                  ? 'Upload a PDF that will be displayed as an embedded document'
                   : 'Write HTML content with the rich text editor'}
               </p>
             </div>
@@ -299,6 +489,73 @@ export function ArticleForm({ article }: ArticleFormProps) {
               />
             </div>
           </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>SEO & Social</span>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setShowSeoFields(!showSeoFields)}>
+                {showSeoFields ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </CardTitle>
+            <p className="text-sm text-gray-500">
+              Overrides for search results and link previews. Leave blank to fall back to the title, excerpt, and featured image above.
+            </p>
+          </CardHeader>
+          {showSeoFields && (
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="seo_title" className={isFieldModified("seo_title") ? "text-blue-600 font-semibold" : ""}>
+                    SEO Title {isFieldModified("seo_title") && <span className="text-xs">(modified)</span>}
+                  </Label>
+                  <span className="text-xs text-gray-400">{formData.seo_title.length}/60</span>
+                </div>
+                <Input
+                  id="seo_title"
+                  value={formData.seo_title}
+                  onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
+                  placeholder={formData.title || "Falls back to Title"}
+                  maxLength={60}
+                  className={isFieldModified("seo_title") ? "border-blue-400 ring-2 ring-blue-100" : ""}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="seo_description"
+                    className={isFieldModified("seo_description") ? "text-blue-600 font-semibold" : ""}
+                  >
+                    SEO Description {isFieldModified("seo_description") && <span className="text-xs">(modified)</span>}
+                  </Label>
+                  <span className="text-xs text-gray-400">{formData.seo_description.length}/160</span>
+                </div>
+                <Textarea
+                  id="seo_description"
+                  value={formData.seo_description}
+                  onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
+                  placeholder={formData.excerpt || "Falls back to Excerpt"}
+                  rows={2}
+                  maxLength={160}
+                  className={isFieldModified("seo_description") ? "border-blue-400 ring-2 ring-blue-100" : ""}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label className={isFieldModified("og_image") ? "text-blue-600 font-semibold" : ""}>
+                  Social Share Image {isFieldModified("og_image") && <span className="text-xs">(modified)</span>}
+                </Label>
+                <MediaSelector
+                  value={formData.og_image}
+                  onChange={(url) => setFormData({ ...formData, og_image: url })}
+                  filterType="image"
+                />
+                <p className="text-xs text-gray-500">Falls back to Featured Image when blank.</p>
+              </div>
+            </CardContent>
+          )}
         </Card>
 
         <Card>
@@ -394,7 +651,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
                       const urlParts = url.split('/');
                       const key = urlParts.slice(3).join('/');
                       setPdfS3Key(key);
-                      
+
                       // Auto-populate title from filename if title is empty
                       if (!formData.title) {
                         const filename = urlParts[urlParts.length - 1];
@@ -427,7 +684,12 @@ export function ArticleForm({ article }: ArticleFormProps) {
               </p>
             </CardHeader>
             <CardContent className={isFieldModified("content") ? "ring-2 ring-blue-100 rounded-md p-4" : ""}>
-              <RichTextEditor value={formData.content} onChange={(content) => setFormData({ ...formData, content })} />
+              <RichTextEditor
+                value={formData.content}
+                onChange={(content) => setFormData({ ...formData, content })}
+                saveStatus={article ? saveStatus : "idle"}
+                lastSavedAt={lastSavedAt}
+              />
             </CardContent>
           </Card>
         )}
@@ -438,9 +700,9 @@ export function ArticleForm({ article }: ArticleFormProps) {
           <Button type="submit" disabled={isLoading} className="bg-[#193fa6] hover:bg-[#2563eb]" size="sm">
             <Save className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">
-              {isLoading 
-                ? "Saving..." 
-                : article && changedFieldsCount > 0 
+              {isLoading
+                ? "Saving..."
+                : article && changedFieldsCount > 0
                   ? `Save ${changedFieldsCount} Change${changedFieldsCount > 1 ? "s" : ""}`
                   : "Save as Draft"
               }
@@ -453,10 +715,18 @@ export function ArticleForm({ article }: ArticleFormProps) {
             className="bg-green-600 hover:bg-green-700"
             size="sm"
           >
-            <Eye className="h-4 w-4 sm:mr-2" />
+            <Send className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">{isLoading ? "Publishing..." : "Publish"}</span>
           </Button>
-          <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading} size="sm">
+          {article && (
+            <Link href={`/dashboard/articles/${article.id}/preview`} target="_blank" rel="noopener noreferrer">
+              <Button type="button" variant="outline" size="sm">
+                <Eye className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Preview</span>
+              </Button>
+            </Link>
+          )}
+          <Button type="button" variant="outline" onClick={handleCancelClick} disabled={isLoading} size="sm">
             <span className="hidden sm:inline">Cancel</span>
             <span className="sm:hidden">✕</span>
           </Button>
@@ -465,6 +735,23 @@ export function ArticleForm({ article }: ArticleFormProps) {
           )}
         </div>
       </div>
+
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes that will be lost if you leave this page now.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDiscardAndLeave} className="bg-red-600 hover:bg-red-700">
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   )
 }

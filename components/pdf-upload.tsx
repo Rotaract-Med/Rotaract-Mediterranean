@@ -15,6 +15,7 @@ export function PDFUpload({ onContentExtracted }: PDFUploadProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [pageProgress, setPageProgress] = useState<{ page: number; total: number } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -52,15 +53,17 @@ export function PDFUpload({ onContentExtracted }: PDFUploadProps) {
     setError(null)
     setSelectedFile(file)
     setIsProcessing(true)
+    setPageProgress(null)
 
     try {
-      const content = await parsePDF(file)
+      const content = await parsePDF(file, (page, total) => setPageProgress({ page, total }))
       onContentExtracted(content)
     } catch (err: any) {
       setError(err.message || "Failed to process PDF")
       setSelectedFile(null)
     } finally {
       setIsProcessing(false)
+      setPageProgress(null)
     }
   }
 
@@ -126,7 +129,9 @@ export function PDFUpload({ onContentExtracted }: PDFUploadProps) {
 
       {isProcessing && (
         <div className="text-center space-y-2">
-          <p className="text-sm text-gray-600">Processing PDF pages...</p>
+          <p className="text-sm text-gray-600">
+            {pageProgress ? `Uploading page ${pageProgress.page} of ${pageProgress.total}...` : "Processing PDF pages..."}
+          </p>
           <p className="text-xs text-gray-500">Rendering full layout, images, colors, and formatting</p>
         </div>
       )}
