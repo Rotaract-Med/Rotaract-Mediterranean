@@ -70,11 +70,17 @@ function canvasToFile(canvas: HTMLCanvasElement, name: string): Promise<File> {
 // clutter their view with images nobody meant to curate. Skipping the DB
 // record just means the file only lives at its S3 URL; the URL is stable
 // either way, which is all the article content needs.
+//
+// Uploaded under the dedicated "pdf-pages" folder (not "media") so a
+// superseded import's pages can be safely deleted later - see the DELETE
+// handler in app/api/upload/presigned/route.ts and the cleanup calls in
+// components/article-form.tsx around every place formData.content gets
+// replaced.
 async function uploadPdfPageImage(file: File): Promise<string> {
   const presignResponse = await fetch("/api/upload/presigned", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fileName: file.name, fileType: file.type }),
+    body: JSON.stringify({ fileName: file.name, fileType: file.type, folder: "pdf-pages" }),
   })
 
   if (!presignResponse.ok) {

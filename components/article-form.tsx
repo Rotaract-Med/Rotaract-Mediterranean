@@ -43,6 +43,27 @@ function isNewDraftEmpty(data: { title: string; slug: string; excerpt: string; c
   return !data.title && !data.slug && !data.excerpt && !data.content && !data.featured_image
 }
 
+const PDF_PAGE_IMG_SRC = /<img[^>]+src="([^"]*\/pdf-pages\/[^"]+)"/g
+
+function extractPdfPageUrls(html: string): string[] {
+  return Array.from(html.matchAll(PDF_PAGE_IMG_SRC), (m) => m[1])
+}
+
+// Deletes PDF-import page renders a newer import (or an unsaved edit being
+// cancelled) has superseded. These never get a media_library row (see
+// lib/pdf-parser.ts), so nothing else ever cleans them up - without this
+// they'd sit orphaned in S3 forever every time someone redoes an import.
+// Fire-and-forget: this is best-effort cleanup, not something that should
+// block or fail the user's actual action.
+function deleteSupersededPdfPages(urls: string[]) {
+  if (urls.length === 0) return
+  fetch("/api/upload/presigned", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ urls }),
+  }).catch((err) => console.error("Failed to clean up superseded PDF pages:", err))
+}
+
 export function ArticleForm({ article }: ArticleFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -133,6 +154,8 @@ export function ArticleForm({ article }: ArticleFormProps) {
   }
 
   const handlePDFContentExtracted = (pdfContent: PDFContent) => {
+    deleteSupersededPdfPages(extractPdfPageUrls(formData.content))
+
     setFormData({
       ...formData,
       title: pdfContent.title,
@@ -291,6 +314,14 @@ export function ArticleForm({ article }: ArticleFormProps) {
 
   const confirmDiscardAndLeave = () => {
     if (!article) clearDraftSnapshot()
+
+    // Only pages imported (but never saved) in this sitting - anything
+    // already present in the saved article stays untouched.
+    const unsavedPdfPages = extractPdfPageUrls(formData.content).filter(
+      (url) => !initialValues.content.includes(url),
+    )
+    deleteSupersededPdfPages(unsavedPdfPages)
+
     setShowCancelConfirm(false)
     router.back()
   }
