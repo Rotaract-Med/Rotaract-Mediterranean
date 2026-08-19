@@ -28,6 +28,7 @@ import { MediaSelector } from "./media-selector"
 import { PDFUpload } from "./pdf-upload"
 import { PDFS3Upload } from "./pdf-s3-upload"
 import type { PDFContent } from "@/lib/pdf-parser"
+import { extractPdfPageUrls, deleteSupersededPdfPages } from "@/lib/pdf-parser"
 import { revalidateArticle } from "@/app/actions/revalidate"
 import { toast } from "@/hooks/use-toast"
 import type { SaveStatus } from "./editor/editor-status-bar"
@@ -43,26 +44,6 @@ function isNewDraftEmpty(data: { title: string; slug: string; excerpt: string; c
   return !data.title && !data.slug && !data.excerpt && !data.content && !data.featured_image
 }
 
-const PDF_PAGE_IMG_SRC = /<img[^>]+src="([^"]*\/pdf-pages\/[^"]+)"/g
-
-function extractPdfPageUrls(html: string): string[] {
-  return Array.from(html.matchAll(PDF_PAGE_IMG_SRC), (m) => m[1])
-}
-
-// Deletes PDF-import page renders a newer import (or an unsaved edit being
-// cancelled) has superseded. These never get a media_library row (see
-// lib/pdf-parser.ts), so nothing else ever cleans them up - without this
-// they'd sit orphaned in S3 forever every time someone redoes an import.
-// Fire-and-forget: this is best-effort cleanup, not something that should
-// block or fail the user's actual action.
-function deleteSupersededPdfPages(urls: string[]) {
-  if (urls.length === 0) return
-  fetch("/api/upload/presigned", {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ urls }),
-  }).catch((err) => console.error("Failed to clean up superseded PDF pages:", err))
-}
 
 export function ArticleForm({ article }: ArticleFormProps) {
   const router = useRouter()
@@ -250,6 +231,12 @@ export function ArticleForm({ article }: ArticleFormProps) {
   }
 
   const handleDiscardDraft = () => {
+    // The abandoned draft's content, not the live form's - this fires
+    // before the user has touched anything, so any pdf-pages/ images live
+    // only in the recovered snapshot at this point.
+    if (recoveredSnapshot?.formData?.content) {
+      deleteSupersededPdfPages(extractPdfPageUrls(recoveredSnapshot.formData.content))
+    }
     clearDraftSnapshot()
     setShowRecoveryBanner(false)
     setRecoveredSnapshot(null)

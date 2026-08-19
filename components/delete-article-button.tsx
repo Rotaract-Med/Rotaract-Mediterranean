@@ -18,6 +18,7 @@ import {
 import { Trash2 } from "lucide-react"
 import { revalidateAllArticles } from "@/app/actions/revalidate"
 import { toast } from "@/hooks/use-toast"
+import { extractPdfPageUrls, deleteSupersededPdfPages } from "@/lib/pdf-parser"
 
 export function DeleteArticleButton({ articleId }: { articleId: string }) {
   const router = useRouter()
@@ -28,11 +29,19 @@ export function DeleteArticleButton({ articleId }: { articleId: string }) {
     const supabase = createClient()
 
     try {
-      const { data: deletedRows, error } = await supabase.from("articles").delete().eq("id", articleId).select("id")
+      const { data: deletedRows, error } = await supabase
+        .from("articles")
+        .delete()
+        .eq("id", articleId)
+        .select("id, content")
       if (error) throw error
       if (!deletedRows || deletedRows.length === 0) {
         throw new Error("You don't have permission to delete this article.")
       }
+
+      // The deleted article's own PDF-import pages (if any) never had a
+      // media_library row to track them, so nothing else cleans them up.
+      deleteSupersededPdfPages(extractPdfPageUrls(deletedRows[0].content || ""))
 
       // Revalidate all article pages
       await revalidateAllArticles()

@@ -103,6 +103,37 @@ async function uploadPdfPageImage(file: File): Promise<string> {
   return publicUrl
 }
 
+const PDF_PAGE_IMG_SRC = /<img[^>]+src="([^"]*\/pdf-pages\/[^"]+)"/g
+
+/**
+ * Finds every PDF-import page image URL embedded in a piece of article
+ * HTML. Used wherever content referencing pdf-pages/ images is about to be
+ * discarded (superseded by a re-import, an unsaved edit being cancelled, a
+ * discarded draft, or the article itself being deleted) - see
+ * deleteSupersededPdfPages() and its call sites in components/article-form.tsx
+ * and components/delete-article-button.tsx.
+ */
+export function extractPdfPageUrls(html: string): string[] {
+  return Array.from(html.matchAll(PDF_PAGE_IMG_SRC), (m) => m[1])
+}
+
+/**
+ * Deletes PDF-import page renders that are no longer referenced by any
+ * saved or in-progress content. These never get a media_library row (see
+ * the upload comment above), so nothing else ever cleans them up - without
+ * this they'd sit orphaned in S3 forever. Fire-and-forget: this is
+ * best-effort cleanup, not something that should block or fail the
+ * caller's actual action (saving, cancelling, deleting, ...).
+ */
+export function deleteSupersededPdfPages(urls: string[]) {
+  if (urls.length === 0) return
+  fetch("/api/upload/presigned", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ urls }),
+  }).catch((err) => console.error("Failed to clean up superseded PDF pages:", err))
+}
+
 /**
  * Extract full PDF content including layout, images, colors, and formatting
  * Renders each page as a high-quality image to preserve visual fidelity.
