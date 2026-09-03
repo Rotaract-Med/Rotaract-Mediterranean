@@ -26,7 +26,7 @@ export default async function ArticlesPage() {
 
   const { data: articles, error } = await supabase
     .from("articles")
-    .select("id, title, slug, excerpt, category, status, featured_image, author_id, created_at, updated_at, published_at, article_type")
+    .select("id, title, slug, excerpt, category, content_type, status, featured_image, author_id, created_at, updated_at, published_at, article_type")
     .order("created_at", { ascending: false })
 
   const canCreate = hasPermission(profile?.role, "articles", "create")
@@ -77,6 +77,11 @@ export default async function ArticlesPage() {
                         {article.status}
                       </Badge>
                       <Badge variant="outline">{article.category}</Badge>
+                      {article.content_type === 'newsletter' ? (
+                        <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">✉️ Newsletter</Badge>
+                      ) : (
+                        <Badge className="bg-indigo-100 text-indigo-800 hover:bg-indigo-100">📰 Article</Badge>
+                      )}
                       {article.article_type === 'pdf' ? (
                         <Badge className="bg-red-100 text-red-800 hover:bg-red-100">📄 PDF</Badge>
                       ) : (

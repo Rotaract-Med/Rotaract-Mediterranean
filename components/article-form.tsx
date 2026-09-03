@@ -57,6 +57,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
     content: article?.content || "",
     featured_image: article?.featured_image || "",
     category: article?.category || "Culture",
+    content_type: article?.content_type || "article",
     status: article?.status || "draft",
     seo_title: article?.seo_title || "",
     seo_description: article?.seo_description || "",
@@ -80,6 +81,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
     content: article?.content || "",
     featured_image: article?.featured_image || "",
     category: article?.category || "Culture",
+    content_type: article?.content_type || "article",
     status: article?.status || "draft",
     seo_title: article?.seo_title || "",
     seo_description: article?.seo_description || "",
@@ -450,6 +452,27 @@ export function ArticleForm({ article }: ArticleFormProps) {
                   <SelectItem value="Stories">Stories</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="content_type" className={isFieldModified("content_type") ? "text-blue-600 font-semibold" : ""}>
+                Publish As {isFieldModified("content_type") && <span className="text-xs">(modified)</span>}
+              </Label>
+              <Select
+                value={formData.content_type}
+                onValueChange={(value) => setFormData({ ...formData, content_type: value })}
+              >
+                <SelectTrigger className={isFieldModified("content_type") ? "border-blue-400 ring-2 ring-blue-100" : ""}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="article">📰 Article</SelectItem>
+                  <SelectItem value="newsletter">✉️ Newsletter</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Controls which section of the MEDTimes page this appears in.
+              </p>
             </div>
 
             <div className="grid gap-2">
