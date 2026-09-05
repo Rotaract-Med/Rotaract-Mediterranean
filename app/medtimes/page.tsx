@@ -34,8 +34,12 @@ export default async function MEDTimesPage() {
 
           <div className="relative h-full max-w-7xl mx-auto px-6 flex flex-col justify-end pb-20">
             <div className="max-w-3xl">
-              <span className="inline-block px-4 py-2 bg-[#193fa6] text-white text-sm font-semibold uppercase tracking-wider mb-4">
-                {featuredArticle.content_type === "newsletter" ? "Featured Newsletter" : "Featured Story"}
+              <span
+                className={`inline-block px-4 py-2 text-white text-sm font-semibold uppercase tracking-wider mb-4 ${
+                  featuredArticle.content_type === "newsletter" ? "bg-[#9c27b0]" : "bg-[#193fa6]"
+                }`}
+              >
+                {featuredArticle.content_type === "newsletter" ? "Featured Newsletter" : "Featured Article"}
               </span>
               <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">{featuredArticle.title}</h1>
               <p className="text-xl text-white/90 mb-6 leading-relaxed">{featuredArticle.excerpt}</p>
