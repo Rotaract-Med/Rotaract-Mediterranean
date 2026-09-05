@@ -52,21 +52,28 @@ export default async function ArticlePreviewPage({ params }: { params: Promise<{
         </div>
 
         <div className="relative h-full max-w-4xl mx-auto px-6 flex flex-col justify-end pb-16">
-          <span
-            className={`inline-block w-fit px-4 py-2 rounded-full text-sm font-semibold text-white mb-4 ${
-              article.category === "Culture"
-                ? "bg-[#00bcd4]"
-                : article.category === "Nature"
-                  ? "bg-[#4caf50]"
-                  : article.category === "Love"
-                    ? "bg-[#e91e63]"
-                    : article.category === "Events"
-                      ? "bg-[#ff9800]"
-                      : "bg-[#9c27b0]"
-            }`}
-          >
-            {article.category}
-          </span>
+          <div className="flex gap-2 mb-4">
+            {article.content_type === "newsletter" && (
+              <span className="inline-block w-fit px-4 py-2 rounded-full text-sm font-semibold text-white bg-[#9c27b0]">
+                ✉️ Newsletter
+              </span>
+            )}
+            <span
+              className={`inline-block w-fit px-4 py-2 rounded-full text-sm font-semibold text-white ${
+                article.category === "Culture"
+                  ? "bg-[#00bcd4]"
+                  : article.category === "Nature"
+                    ? "bg-[#4caf50]"
+                    : article.category === "Love"
+                      ? "bg-[#e91e63]"
+                      : article.category === "Events"
+                        ? "bg-[#ff9800]"
+                        : "bg-[#9c27b0]"
+              }`}
+            >
+              {article.category}
+            </span>
+          </div>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">{article.title}</h1>
           <div className="flex items-center gap-6 text-white/80">
             <span>Rotaract Mediterranean</span>

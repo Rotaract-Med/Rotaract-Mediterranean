@@ -3,8 +3,17 @@ import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams, origin: requestOrigin } = new URL(request.url)
   const code = searchParams.get("code")
+
+  // Behind a reverse proxy (Coolify/Traefik) request.url resolves to the
+  // container's own address (localhost:3000), so build the public origin from
+  // an explicit env var first, then the forwarded headers, then fall back.
+  const forwardedHost = request.headers.get("x-forwarded-host")
+  const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https"
+  const origin =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+    (forwardedHost ? `${forwardedProto}://${forwardedHost}` : requestOrigin)
 
   if (code) {
     const supabase = await createClient()
@@ -55,10 +64,10 @@ export async function GET(request: Request) {
 
     if (!profile) {
       console.log("[v0] Creating profile manually for user:", user.id)
-      
+
       // Use service role client to bypass RLS
       const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_SUPABASESERVICE_KEY
-      
+
       if (!serviceRoleKey) {
         console.error("[v0] Service role key not found in environment variables")
         return NextResponse.redirect(`${origin}/auth/error`)
